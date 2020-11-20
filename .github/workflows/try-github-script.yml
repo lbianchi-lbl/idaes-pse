@@ -1,6 +1,7 @@
 name: Try actions/github-script
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - try-github-script
