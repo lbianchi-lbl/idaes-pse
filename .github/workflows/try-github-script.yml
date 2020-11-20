@@ -24,4 +24,12 @@ jobs:
             });
 
             console.log(labels);
+            
+            const {data: reviews} = await github.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: 1
+            });
+            
+            console.log(reviews);
 
