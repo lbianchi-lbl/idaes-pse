@@ -28,7 +28,7 @@ jobs:
     # run for non-PR events, OR if the PR has been labeled with "approved"
     # this happens regardless of whether the label has been set automatically or manually
     # TODO we could consider using a more explicit label name (e.g. "integration-tests-active" or similar)
-    if: github.event_name != 'pull_request' || github.event.label.name == "approved"
+    if: github.event_name != 'pull_request' || github.event.label.name == 'approved'
     name: Integration tests (py=${{ matrix.python-version }}, os=${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
