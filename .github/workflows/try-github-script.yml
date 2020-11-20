@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Get PR labels
-        uses: actions/github-script
+        uses: actions/github-script@master
         with:
           github-token: ${{ secrets.GHA_TOKEN }}
           script: |
