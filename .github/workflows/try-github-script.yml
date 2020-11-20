@@ -32,4 +32,9 @@ jobs:
             });
             
             console.log(reviews);
+            
+            const currentReviewState = {};
+            reviews.forEach(review => currentReviewState[review.user.login] = review.state);
+            
+            console.log(currentReviewState);
 
