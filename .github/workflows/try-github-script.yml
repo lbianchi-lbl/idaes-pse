@@ -17,7 +17,7 @@ jobs:
         with:
           github-token: ${{ secrets.GHA_TOKEN }}
           script: |
-            const labels = await github.issues.getLabels({
+            const labels = await github.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: 1
