@@ -37,4 +37,9 @@ jobs:
             reviews.forEach(review => currentReviewState[review.user.login] = review.state);
             
             console.log(currentReviewState);
+            
+            const approvingReviewers = Object.keys(currentReviewState).filter(user => currentReviewState[user] === "APPROVED");
+            
+            console.log(approvingReviewers);
+            console.log(`There are ${approvingReviewers.length} approving reviewers`);
 
