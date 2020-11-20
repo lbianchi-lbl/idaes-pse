@@ -24,7 +24,11 @@ jobs:
             });
 
             console.log(labels);
-            
+      - name: Check number of approvals
+        uses: actions/github-script@master
+        with:
+          github-token: ${{ secrets.GHA_TOKEN }}
+          script: |
             const {data: reviews} = await github.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -42,4 +46,19 @@ jobs:
             
             console.log(approvingReviewers);
             console.log(`There are ${approvingReviewers.length} approving reviewers`);
+            
+      - name: Add label
+        uses: actions/github-script@master
+        with:
+          github-token: ${{ secrets.GHA_TOKEN }}
+          script: |
+            await github.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 1,
+              labels: {
+                labels: ["added-by-bot", "also-added-by-bot"]
+              }
+            });
+            
 
