@@ -1,0 +1,23 @@
+name: Try  actions/github-script
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-labels:
+    name: Get labels for PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get PR labels
+        uses: actions/github-script
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labels = await github.issues.getLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 1
+            });
+            console.log(results);
+
