@@ -23,5 +23,5 @@ jobs:
               issue_number: 1
             });
 
-            console.log(results);
+            console.log(labels);
 
