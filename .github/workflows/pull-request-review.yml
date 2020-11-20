@@ -1,0 +1,21 @@
+name: PR review
+
+on:
+  pull_request_review:
+    types:
+      - submitted
+
+jobs:
+  label_when_approved:
+    name: Label when approved
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add approved label
+        uses: pullreminders/label-when-approved-action@master
+        env:
+          # the minimum number of approving reviews for the PR to be considered approved
+          # it should match the number set in the repo "Settings" menu
+          APPROVALS: "2"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ADD_LABEL: "approved"
+          # can optionally set label to remove with REMOVE_LABEL
