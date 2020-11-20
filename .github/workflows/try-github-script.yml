@@ -12,7 +12,7 @@ jobs:
       - name: Get PR labels
         uses: actions/github-script
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GHA_TOKEN }}
           script: |
             const labels = await github.issues.getLabels({
               owner: context.repo.owner,
