@@ -50,7 +50,7 @@ module.exports = async ({github, context, number, minCountApproved, approvedLabe
     const latestReviews = selectLatestPerUser(reviews);
     console.log('Latest reviews:')
     console.log(latestReviews)
-    const countApproved = [...latestReviews].filter(r => r.state === REVIEW_STATE.approved);
+    const countApproved = [...latestReviews].filter(r => r.state === REVIEW_STATE.approved).length;
     const isApproved = countApproved >= minCountApproved;
     console.log(`${countApproved} approved (at least ${minCountApproved} required): ${isApproved ? "" : "not"} approved.`);
     await ensureLabelState({
