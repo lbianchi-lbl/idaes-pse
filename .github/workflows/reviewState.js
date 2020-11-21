@@ -18,7 +18,7 @@ async function ensureLabelState({github, labelName, shouldBeSet, apiArgs}) {
     const {data: labels} = await github.issues.listLabelsOnIssue({
         ...apiArgs
     });
-    const isSet = [...labels].filter(labels)(lab => lab.name === labelName).length > 0;
+    const isSet = [...labels].filter(lab => lab.name === labelName).length > 0;
     console.log(`Label ${labelName} ${isSet ? "is set" : "is not set"}`);
     const needsAdding = shouldBeSet && !isSet;
     const needsRemoving = !shouldBeSet && isSet;
