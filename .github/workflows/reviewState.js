@@ -5,12 +5,12 @@ const REVIEW_STATE = {
 
 function selectLatestPerUser(reviews) {
     const latestByUser = {};
-    reviews.forEach(r => {
+    for (const r of reviews) {
         // the reviews are in chronological order (earliest to latest)
         // so to get the latest for each user we can use an Object as a map and lop over all reviews
         // at each iteration, a more recent review for that user will replace an earlier one set before it
         latestByUser[r.user.login] = r;
-    });
+    }
     return Object.values(latestByUser);
 }
 
@@ -18,7 +18,7 @@ function ensureLabelState(labelName, shouldBeSet, apiArgs) {
     const labels = github.issues.listLabelsOnIssue({
         ...apiArgs
     });
-    const isSet = labels.filter(lab => lab.name === labelName).length > 0;
+    const isSet = [...labels].filter(labels)(lab => lab.name === labelName).length > 0;
     console.log(`Label ${labelName} ${isSet ? "is set" : "is not set"}`);
     const needsAdding = shouldBeSet && !isSet;
     const needsRemoving = !shouldBeSet && isSet;
@@ -49,7 +49,7 @@ module.exports = ({github, context, number, minCountApproved, approvedLabelName}
     const latestReviews = selectLatestPerUser(reviews);
     console.log('Latest reviews:')
     console.log(latestReviews)
-    const countApproved = latestReviews.filter(r => r.state === REVIEW_STATE.approved);
+    const countApproved = [...latestReviews].filter(r => r.state === REVIEW_STATE.approved);
     const isApproved = countApproved >= minCountApproved;
     console.log(`${countApproved} approved (at least ${minCountApproved} required): ${isApproved ? "" : "not"} approved.`);
     ensureLabelState(
