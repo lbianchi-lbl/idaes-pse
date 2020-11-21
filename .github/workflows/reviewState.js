@@ -57,6 +57,7 @@ module.exports = async ({github, context, number, minCountApproved, approvedLabe
         approvedLabelName,
         isApproved,
         {
+            github: github,
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: number,
