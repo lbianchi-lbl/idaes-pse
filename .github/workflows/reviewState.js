@@ -14,7 +14,7 @@ function selectLatestPerUser(reviews) {
     return Object.values(latestByUser);
 }
 
-async function ensureLabelState(labelName, shouldBeSet, apiArgs) {
+async function ensureLabelState({github, labelName, shouldBeSet, apiArgs}) {
     const {data: labels} = await github.issues.listLabelsOnIssue({
         ...apiArgs
     });
@@ -53,14 +53,14 @@ module.exports = async ({github, context, number, minCountApproved, approvedLabe
     const countApproved = [...latestReviews].filter(r => r.state === REVIEW_STATE.approved);
     const isApproved = countApproved >= minCountApproved;
     console.log(`${countApproved} approved (at least ${minCountApproved} required): ${isApproved ? "" : "not"} approved.`);
-    await ensureLabelState(
-        approvedLabelName,
-        isApproved,
-        {
-            github: github,
+    await ensureLabelState({
+        github: github,
+        labelName: approvedLabelName,
+        shouldBeSet: isApproved,
+        apiArgs: {
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: number,
         }
-    );
+    });
 }
