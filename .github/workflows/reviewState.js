@@ -46,6 +46,7 @@ module.exports = ({github, context, number, minCountApproved, approvedLabelName}
         repo: context.repo.repo,
         pull_number: 1,
     });
+    console.log(reviews);
     const latestReviews = selectLatestPerUser(reviews);
     console.log('Latest reviews:')
     console.log(latestReviews)
