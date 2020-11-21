@@ -7,6 +7,23 @@ on:
       - try-github-script
 
 jobs:
+  assign-approved-label:
+    name: Assign approved label
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/github-script@master
+        with:
+          github-token: ${{ secrets.GHA_TOKEN }}
+          script: |
+            const script = require(`${process.env.GITHUB_WORKSPACE}/reviewState.js`);
+            script({
+              github: github,
+              context: context,
+              minCountApproved: 2,
+              approvedLabelName: "ci:review-approved",
+              number: 1,
+            });
   get-labels:
     name: Get labels for PR
     runs-on: ubuntu-latest
@@ -58,5 +75,4 @@ jobs:
               issue_number: 1,
               labels: ["added-by-bot", "also-added-by-bot", "approved"],
             });
-            
 
