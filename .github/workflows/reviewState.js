@@ -40,7 +40,7 @@ async function ensureLabelState(labelName, shouldBeSet, apiArgs) {
     };
 }
 
-module.exports = ({github, context, number, minCountApproved, approvedLabelName}) => {
+module.exports = async ({github, context, number, minCountApproved, approvedLabelName}) => {
     const reviews = await github.pulls.listReviews({
         owner: context.repo.owner,
         repo: context.repo.repo,
