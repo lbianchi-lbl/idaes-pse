@@ -14,8 +14,8 @@ function selectLatestPerUser(reviews) {
     return Object.values(latestByUser);
 }
 
-function ensureLabelState(labelName, shouldBeSet, apiArgs) {
-    const labels = github.issues.listLabelsOnIssue({
+async function ensureLabelState(labelName, shouldBeSet, apiArgs) {
+    const labels = await github.issues.listLabelsOnIssue({
         ...apiArgs
     });
     const isSet = [...labels].filter(labels)(lab => lab.name === labelName).length > 0;
@@ -24,13 +24,13 @@ function ensureLabelState(labelName, shouldBeSet, apiArgs) {
     const needsRemoving = !shouldBeSet && isSet;
     if (needsAdding) {
         console.log('It should be set, so it will be added');
-        github.issues.addLabels({
+        await github.issues.addLabels({
             ...apiArgs,
             labels: [labelName]
         });
     } else if (needsRemoving) {
         console.log('It should not be set, so it will be removed');
-        github.issues.removeLabel({
+        await github.issues.removeLabel({
             ...apiArgs,
             name: labelName
         });
@@ -41,7 +41,7 @@ function ensureLabelState(labelName, shouldBeSet, apiArgs) {
 }
 
 module.exports = ({github, context, number, minCountApproved, approvedLabelName}) => {
-    const reviews = github.pulls.listReviews({
+    const reviews = await github.pulls.listReviews({
         owner: context.repo.owner,
         repo: context.repo.repo,
         pull_number: 1,
@@ -53,7 +53,7 @@ module.exports = ({github, context, number, minCountApproved, approvedLabelName}
     const countApproved = [...latestReviews].filter(r => r.state === REVIEW_STATE.approved);
     const isApproved = countApproved >= minCountApproved;
     console.log(`${countApproved} approved (at least ${minCountApproved} required): ${isApproved ? "" : "not"} approved.`);
-    ensureLabelState(
+    await ensureLabelState(
         approvedLabelName,
         isApproved,
         {

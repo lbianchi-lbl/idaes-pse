@@ -17,7 +17,7 @@ jobs:
           github-token: ${{ secrets.GHA_TOKEN }}
           script: |
             const script = require(`${process.env.GITHUB_WORKSPACE}/.github/workflows/reviewState.js`);
-            script({
+            await script({
               github: github,
               context: context,
               minCountApproved: 2,
