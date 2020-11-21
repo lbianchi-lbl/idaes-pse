@@ -5,12 +5,12 @@ const REVIEW_STATE = {
 
 function selectLatestPerUser(reviews) {
     const latestByUser = {};
-    for (const r of reviews) {
+    [...reviews].forEach(r => {
         // the reviews are in chronological order (earliest to latest)
         // so to get the latest for each user we can use an Object as a map and lop over all reviews
         // at each iteration, a more recent review for that user will replace an earlier one set before it
         latestByUser[r.user.login] = r;
-    }
+    });
     return Object.values(latestByUser);
 }
 
