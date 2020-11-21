@@ -40,7 +40,7 @@ function ensureLabelState(labelName, shouldBeSet, apiArgs) {
     };
 }
 
-export function assignApprovalStateLabel({github, context, number, minCountApproved, approvedLabelName}) {
+module.exports = ({github, context, number, minCountApproved, approvedLabelName}) => {
     const reviews = github.pulls.listReviews({
         owner: context.repo.owner,
         repo: context.repo.repo,
