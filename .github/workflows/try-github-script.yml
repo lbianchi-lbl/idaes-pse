@@ -2,15 +2,15 @@ name: Try actions/github-script
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - try-github-script
+  pull_request_review:
 
 jobs:
   assign-approved-label:
     name: Assign approved label
     runs-on: ubuntu-latest
     steps:
+      - name: Log debug info
+        run: jq -M < $GITHUB_EVENT_PATH
       - uses: actions/checkout@v2
       - uses: actions/github-script@master
         with:
@@ -24,55 +24,3 @@ jobs:
               approvedLabelName: "ci:review-approved",
               number: 1,
             });
-  get-labels:
-    name: Get labels for PR
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Get PR labels
-        uses: actions/github-script@master
-        with:
-          github-token: ${{ secrets.GHA_TOKEN }}
-          script: |
-            const {data: labels} = await github.issues.listLabelsOnIssue({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 1
-            });
-
-            console.log(labels);
-      - name: Check number of approvals
-        uses: actions/github-script@master
-        with:
-          github-token: ${{ secrets.GHA_TOKEN }}
-          script: |
-            const {data: reviews} = await github.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: 1
-            });
-            
-            console.log(reviews);
-            
-            const currentReviewState = {};
-            reviews.forEach(review => currentReviewState[review.user.login] = review.state);
-            
-            console.log(currentReviewState);
-            
-            const approvingReviewers = Object.keys(currentReviewState).filter(user => currentReviewState[user] === "APPROVED");
-            
-            console.log(approvingReviewers);
-            console.log(`There are ${approvingReviewers.length} approving reviewers`);
-            
-      - name: Add label
-        uses: actions/github-script@master
-        with:
-          github-token: ${{ secrets.GHA_TOKEN }}
-          script: |
-            await github.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 1,
-              labels: ["added-by-bot", "also-added-by-bot", "approved"],
-            });
-
