@@ -7,29 +7,29 @@ function selectLatestPerUser(reviews) {
     const latestByUser = {};
     [...reviews].forEach(r => {
         // the reviews are in chronological order (earliest to latest)
-        // so to get the latest for each user we can use an Object as a map and lop over all reviews
+        // so to get the latest for each user we can use an Object as a map and loop over all reviews
         // at each iteration, a more recent review for that user will replace an earlier one set before it
         latestByUser[r.user.login] = r;
     });
     return Object.values(latestByUser);
 }
 
-async function ensureLabelState({github, labelName, shouldBeSet, apiArgs}) {
+async function ensureLabelPresence({github, labelName, shouldBePresent, apiArgs}) {
     const {data: labels} = await github.issues.listLabelsOnIssue({
         ...apiArgs
     });
-    const isSet = [...labels].filter(lab => lab.name === labelName).length > 0;
-    console.log(`Label ${labelName} ${isSet ? "is set" : "is not set"}`);
-    const needsAdding = shouldBeSet && !isSet;
-    const needsRemoving = !shouldBeSet && isSet;
+    const isPresent = [...labels].filter(lab => lab.name === labelName).length > 0;
+    console.log(`Label ${labelName} is ${isPresent ? "" : "not"} present, when it should ${shouldBePresent ? "": "not"} be present.`);
+    const needsAdding = shouldBePreset && !isPresent;
+    const needsRemoving = !shouldBePreset && isPresent;
     if (needsAdding) {
-        console.log('It should be set, so it will be added');
+        console.log(`Adding label ${labelName}...`);
         await github.issues.addLabels({
             ...apiArgs,
             labels: [labelName]
         });
     } else if (needsRemoving) {
-        console.log('It should not be set, so it will be removed');
+        console.log(`Removing label ${labelName}...`);
         await github.issues.removeLabel({
             ...apiArgs,
             name: labelName
@@ -53,10 +53,10 @@ module.exports = async ({github, context, number, minCountApproved, approvedLabe
     const countApproved = [...latestReviews].filter(r => r.state === REVIEW_STATE.approved).length;
     const isApproved = countApproved >= minCountApproved;
     console.log(`${countApproved} approved (at least ${minCountApproved} required): ${isApproved ? "" : "not"} approved.`);
-    await ensureLabelState({
+    await ensureLabelPresence({
         github: github,
         labelName: approvedLabelName,
-        shouldBeSet: isApproved,
+        shouldBePresent: isApproved,
         apiArgs: {
             owner: context.repo.owner,
             repo: context.repo.repo,
