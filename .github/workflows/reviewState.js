@@ -20,8 +20,8 @@ async function ensureLabelPresence({github, labelName, shouldBePresent, apiArgs}
     });
     const isPresent = [...labels].filter(lab => lab.name === labelName).length > 0;
     console.log(`Label ${labelName} is ${isPresent ? "" : "not"} present, when it should ${shouldBePresent ? "": "not"} be present.`);
-    const needsAdding = shouldBePreset && !isPresent;
-    const needsRemoving = !shouldBePreset && isPresent;
+    const needsAdding = shouldBePresent && !isPresent;
+    const needsRemoving = !shouldBePresent && isPresent;
     if (needsAdding) {
         console.log(`Adding label ${labelName}...`);
         await github.issues.addLabels({
