@@ -36,6 +36,9 @@ jobs:
                 return Object.values(latestByUser);
             }
 
+            console.log(github);
+            console.log(context);
+
             const {data: reviews} = await github.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
