@@ -31,6 +31,7 @@ jobs:
       scheduled: ${{ github.event_name == 'schedule' }}
       pr-approved: ${{ github.event_name == 'pull_request_review' && steps.get-count-approved.outputs.result >= 2 }}
     steps:
+      - uses: actions/checkout@v2
       - name: Get count of approved reviews
         id: get-count-approved
         if: github.event_name == 'pull_request_review'
