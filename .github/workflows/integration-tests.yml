@@ -14,22 +14,41 @@ on:
   schedule:
     # run daily at 5:00 am UTC (12 am ET/9 pm PT)
     - cron: '0 5 * * *'
-  # TODO add PR when "draft" status is switched off (or absent?)
-  pull_request:
+  pull_request_review:
     types:
-      - labeled
+      - submitted
+      - edited
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  integration:
-    # run for non-PR events, OR if the PR has been labeled with "approved"
-    # this happens regardless of whether the label has been set automatically or manually
-    # TODO we could consider using a more explicit label name (e.g. "integration-tests-active" or similar)
-    if: github.event_name != 'pull_request' || github.event.label.name == 'approved'
-    name: Integration tests (py=${{ matrix.python-version }}, os=${{ matrix.os }})
+  check-trigger:
+    name: Check 
+    runs-on: ubuntu-latest
+    outputs:
+      scheduled: ${{ github.event_name == 'schedule' }}
+      pr-approved: ${{ github.event_name == 'pull_request_review' && steps.get-count-approved.outputs.result >= 2 }}
+    steps:
+      - name: Get count of approved reviews
+        id: get-count-approved
+        if: github.event_name == 'pull_request_review'
+        uses: actions/github-script@master
+        with:
+          script: |
+            const script = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
+            const countApproved = await script({
+              github: github,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pullNumber: context.payload.pull_request.number,
+            });
+            return countApproved;
+  run-integration:
+    needs: check-trigger
+    if: needs.check-trigger.outputs.scheduled || needs.check-trigger.outputs.pr-approved
+    name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
@@ -49,7 +68,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install idaes and dependencies
         run: |
-          python -m pip --no-cache-dir install --progress-bar off .[dev]
+          python -m pip install --progress-bar off --upgrade pip setuptools wheel
+          python -m pip install --progress-bar off -r requirements-dev.txt
+          idaes --version
       - name: Install extensions
         run: |
           idaes get-extensions --verbose
