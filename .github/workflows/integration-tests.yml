@@ -37,7 +37,7 @@ jobs:
         uses: actions/github-script@master
         with:
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
+            const script = require(`${process.env.GITHUB_WORKSPACE}/.github/workflows/countApproved.js`);
             const countApproved = await script({
               github: github,
               owner: context.repo.owner,
