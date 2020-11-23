@@ -36,13 +36,12 @@ jobs:
                 return Object.values(latestByUser);
             }
 
-            console.log(github);
             console.log(context);
 
             const {data: reviews} = await github.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: github.event.pull_request.number,
+              pull_number: context.pull_request.number,
             });
 
             const latestReviews = selectLatestPerUser(reviews);
