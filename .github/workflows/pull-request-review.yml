@@ -15,6 +15,9 @@ jobs:
   verify-approval:
     name: Count approved reviews
     runs-on: ubuntu-latest
+    outputs:
+      count-approved: ${{ steps.get-count-approved.outputs.result }}
+      is-approved: ${{ steps.get-count-approved.outputs.result >= 2 }}
     steps:
       - name: Get count of approved reviews
         id: get-count-approved
@@ -61,8 +64,8 @@ jobs:
       - name: Display prev job results
         run: |
           echo '${{ toJSON(needs) }}'
-          echo ${{ toJSON(needs.verify-approval.steps.get-count-approved.outputs) }}
-          echo ${{ needs.verify-approval.steps.get-count-approved.outputs.result >= 2 }}
+          echo ${{ toJSON(needs.verify-approval.outputs.count-approved) }}
+          echo ${{ needs.verify-approval.outputs.count-approved >= 2 }}
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         if: needs.steps.verify-approval.get-count-approved.outputs.result >= 2
