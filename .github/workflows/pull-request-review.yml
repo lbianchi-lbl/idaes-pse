@@ -60,6 +60,7 @@ jobs:
     steps:
       - name: Display prev job results
         run: |
+          echo ${{ toJSON(needs) }}
           echo ${{ toJSON(needs.verify-approval.steps.get-count-approved.outputs) }}
           echo ${{ needs.verify-approval.steps.get-count-approved.outputs.result >= 2 }}
       - uses: actions/checkout@v2
