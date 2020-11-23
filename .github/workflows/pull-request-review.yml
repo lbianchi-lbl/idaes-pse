@@ -60,11 +60,11 @@ jobs:
     steps:
       - name: Display prev job results
         run: |
-          echo ${{ toJSON(needs.steps.get-count-approved.outputs) }}
-          echo ${{ needs.steps.get-count-approved.outputs.result >= 2 }}
+          echo ${{ toJSON(needs.verify-approval.steps.get-count-approved.outputs) }}
+          echo ${{ needs.verify-approval.steps.get-count-approved.outputs.result >= 2 }}
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-        if: needs.steps.get-count-approved.outputs.result >= 2
+        if: needs.steps.verify-approval.get-count-approved.outputs.result >= 2
         with:
           python-version: '3.7'
       - name: Install IDAES and extensions
