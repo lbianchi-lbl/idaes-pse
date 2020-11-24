@@ -48,9 +48,12 @@ jobs:
               pullNumber: context.payload.pull_request.number,
             });
             return countApproved;
-  run-integration:
+  decide-if-continue:
     needs: check-trigger
-    if: ( fromJSON(needs.check-trigger.outputs.on-default-branch) || fromJSON(needs.check-trigger.outputs.pr-approved) ) == true
+    if: needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved
+    runs-on: ubuntu-latest
+  run-integration:
+    needs: decide-if-continue
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
