@@ -56,7 +56,8 @@ jobs:
             const decision = shouldRun ? 'run' : 'skip';
             console.log(`decision: ${decision}`);
             return decision;
-  decide-if-continue:
+  debug-check-trigger:
+    name: Debug info from check-trigger job
     needs: check-trigger
     runs-on: ubuntu-latest
     steps:
@@ -66,8 +67,6 @@ jobs:
           echo '${{ needs.check-trigger.outputs.decision }}'
           echo '${{ needs.check-trigger.outputs.decision == 'run' }}'
           echo '${{ needs.check-trigger.outputs.decision == 'skip' }}'
-          echo '${{ true || false }}'
-          echo '${{ (true || false) }}'
   run-integration:
     needs: check-trigger
     if: needs.check-trigger.outputs.decision == 'run'
@@ -92,7 +91,6 @@ jobs:
         run: |
           echo '${{ toJSON(needs) }}'
           echo '${{ toJSON(matrix) }}'
-          echo '${{ needs.decide-if-continue.outputs.should-continue }}'
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
