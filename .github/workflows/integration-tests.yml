@@ -50,7 +50,7 @@ jobs:
             return countApproved;
   run-integration:
     needs: check-trigger
-    if: needs.check-trigger.outputs.should-run
+    if: needs.check-trigger.outputs.should-run == true
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
