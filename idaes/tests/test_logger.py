@@ -91,6 +91,13 @@ def test_add_remove_tags():
     idaeslog.set_log_tags(idaeslog.valid_log_tags())
     assert "model2" in idaeslog.log_tags()
 
+@pytest.mark.unit
+def test_add_invalid_tags():
+    invalid_tags = ['non-existing-tag', 'no-such-valid-tag']
+    with pytest.raises(ValueError):
+        idaeslog.add_log_tag(invalid_tags[0])
+    with pytest.raises(ValueError):
+        idaeslog.set_log_tags(invalid_tags)
 
 @pytest.mark.skipif(not pyo.SolverFactory('ipopt').available(False), reason="no Ipopt")
 @pytest.mark.unit
