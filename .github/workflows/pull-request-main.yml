@@ -15,6 +15,10 @@ defaults:
   run:
     shell: bash
 
+env:
+  PIP_INSTALL: python -m pip --no-cache-dir install --progress-bar off
+  PIP_UPGRADE_PIP: python -m pip --no-cache-dir install --progress-bar off --upgrade pip setuptools wheel
+
 jobs:
   run-tests:
     name: Install and test (py${{ matrix.python-version }}/${{ matrix.os }})
@@ -44,8 +48,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install IDAES with dev dependencies
         run: |
-          python -m pip install --progress-bar off pip setuptools wheel
-          python -m pip install --progress-bar off -r requirements-dev.txt
+          $PIP_UPGRADE_PIP
+          $PIP_INSTALL -r requirements-dev.txt
       - name: Display IDAES version
         run: |
           idaes --version
@@ -93,8 +97,8 @@ jobs:
     - name: Install Sphinx dependencies
       run: |
         # idaes and the modules in idaes.__init__ are imported when accessing idaes.ver
-        python -m pip --no-cache-dir install --progress-bar off pip setuptools wheel
-        python -m pip --no-cache-dir install --progress-bar off -r requirements-dev.txt
+        $PIP_UPGRADE_PIP
+        $PIP_INSTALL -r requirements-dev.txt
     - name: Install IDAES extensions
       run: |
         idaes get-extensions --verbose
@@ -125,12 +129,12 @@ jobs:
         python-version: '3.7'
     - name: Install pylint dependencies
       run: |
+        $PIP_UPGRADE_PIP
         # TODO pylint and astroid versions will need to be pinned
-        python -m pip --no-cache-dir install --progress-bar off pip setuptools wheel
-        python -m pip --no-cache-dir install --progress-bar off pylint
+        $PIP_INSTALL pylint
         # in general the package being pylinted does not need to be installed to run pylint on it
         # but in our case the pylint plugin needs to be able to import some code from idaes and pyomo
-        python -m pip --no-cache-dir install --progress-bar off -r requirements.txt
+        $PIP_INSTALL -r requirements.txt
     - name: Run pylint
       run: |
         pylint -E --ignore-patterns="test_.*" idaes || true
