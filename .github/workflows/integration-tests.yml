@@ -42,7 +42,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install idaes and dependencies
         run: |
-          python -m pip --no-cache-dir install --progress-bar off .[dev]
+          python -m pip install --progress-bar off --upgrade pip setuptools wheel
+          python -m pip install --progress-bar off -r requirements-dev.txt
+          idaes --version
       - name: Install extensions
         run: |
           idaes get-extensions --verbose
