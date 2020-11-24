@@ -63,6 +63,7 @@ jobs:
           echo '${{ (needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved) }}'
           echo '${{ true || false }}'
           echo '${{ (true || false) }}'
+
       - name: Test condition
         run: |
           test '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}' = 'true'
