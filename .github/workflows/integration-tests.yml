@@ -19,6 +19,9 @@ on:
       - submitted
       # FIXME "edited" is convenient for testing, but could end up triggering too often if left in production
       - edited
+  pull_request:
+    types:
+      - review_requested
 
 defaults:
   run:
@@ -35,6 +38,9 @@ jobs:
     outputs:
       decision: ${{ steps.get-run-or-skip.outputs.result }}
     steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(github.event) }}'
       - uses: actions/checkout@v2
       - name: Decide if to run or skip rest of the workflow
         id: get-run-or-skip
@@ -44,6 +50,7 @@ jobs:
           script: |
             var shouldRun = null;
             const isPRReview = context.eventName == 'pull_request_review';
+            const isReviewRequest = context.eventName == 'pull_request' && context.payload.action == 'review_requested';
             if (isPRReview) {
               const getCountApproved = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
               const countApproved = await getCountApproved({
@@ -54,6 +61,9 @@ jobs:
               });
               const isApproved = countApproved >= 2;
               shouldRun = isApproved;
+            } else if (isReviewRequest) {
+              const reqReviewers = context.payload.pull_request.requested_reviewers || [];
+              shouldRun = reqReviewers.some(user => user.login == 'idaes-build');
             } else {
               shouldRun = true;
             }
