@@ -29,46 +29,47 @@ jobs:
     name: Check trigger event
     runs-on: ubuntu-latest
     outputs:
-      on-default-branch: ${{ !contains(github.event_name, 'pull_request') }}
-      pr-approved: ${{ github.event_name == 'pull_request_review' && steps.get-count-approved.outputs.result >= 2 }}
-      should-run: ${{ false }}
+      decision: ${{ steps.get-run-or-skip.outputs.result }}
     steps:
       - uses: actions/checkout@v2
-      - name: Get count of approved reviews
-        id: get-count-approved
-        if: github.event_name == 'pull_request_review'
+      - name: Decide if to run or skip rest of the workflow
+        id: get-run-or-skip
         uses: actions/github-script@master
         with:
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
-            const countApproved = await script({
-              github: github,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pullNumber: context.payload.pull_request.number,
-            });
-            return countApproved;
+            var shouldRun = null;
+            const isPRReview = context.eventName == 'pull_request_review';
+            if (isPRReview) {
+              const getCountApproved = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
+              const countApproved = await getCountApproved({
+                github: github,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pullNumber: context.payload.pull_request.number,
+              });
+              const isApproved = countApproved >= 2;
+              shouldRun = isApproved;
+            } else {
+              shouldRun = true;
+            }
+            const decision = shouldRun ? 'run' : 'skip';
+            console.log(`decision: ${decision}`);
+            return decision;
   decide-if-continue:
     needs: check-trigger
-    outputs:
-      should-continue: ${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}
     runs-on: ubuntu-latest
     steps:
       - name: Display debug info
         run: |
           echo '${{ toJSON(needs) }}'
-          echo '${{ needs.check-trigger.outputs.on-default-branch }}'
-          echo '${{ needs.check-trigger.outputs.pr-approved }}'
-          echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
-          echo '${{ (needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved) }}'
+          echo '${{ needs.check-trigger.outputs.decision }}
+          echo '${{ needs.check-trigger.outputs.decision == 'run' }}
+          echo '${{ needs.check-trigger.outputs.decision == 'skip' }}
           echo '${{ true || false }}'
           echo '${{ (true || false) }}'
-
-      - name: Test condition
-        run: |
-          test '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}' = 'true'
   run-integration:
-    needs: decide-if-continue
+    needs: check-trigger
+    if: needs.check-trigger.outputs.decision == 'run'
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
