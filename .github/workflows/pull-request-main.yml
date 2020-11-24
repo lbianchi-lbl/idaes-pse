@@ -68,11 +68,16 @@ jobs:
               ipopt -v
           fi
       - name: Run tests (excluding integration)
+        if: '!matrix.upload-coverage'
         run: |
-          pytest -c pytest.ini -m 'not integration' --cov idaes/
+          pytest -c pytest.ini -m 'not integration' idaes/
       # instead of running tests in a separate job to create the coverage report,
       # run all tests with the --cov flag, but only upload a single report
       # by running the upload in a separate step that's executed only for a single matrix replica
+      - name: Run tests (excluding integration) with coverage
+        if: matrix.upload-coverage
+        run: |
+          pytest -c pytest.ini -m 'not integration' idaes/ --cov
       - name: Create test coverage report (Codecov)
         if: matrix.upload-coverage
         env:
