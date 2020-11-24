@@ -36,6 +36,7 @@ jobs:
         id: get-run-or-skip
         uses: actions/github-script@master
         with:
+          result-encoding: string
           script: |
             var shouldRun = null;
             const isPRReview = context.eventName == 'pull_request_review';
