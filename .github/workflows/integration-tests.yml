@@ -51,7 +51,7 @@ jobs:
   decide-if-continue:
     needs: check-trigger
     outputs:
-      should-continue: needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved
+      should-continue: ${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}
     runs-on: ubuntu-latest
     steps:
       - name: Display debug info
