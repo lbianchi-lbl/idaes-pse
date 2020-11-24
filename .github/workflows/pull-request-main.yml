@@ -19,6 +19,7 @@ defaults:
 
 jobs:
   run-tests:
+    if: 'false'
     name: Install and test (py=${{ matrix.python-version }}, os=${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -61,18 +62,37 @@ jobs:
       - name: Run tests (excluding integration)
         run: |
           pytest -c pytest.ini -m 'not integration' idaes/
-      - name: Run integration tests
-        # if this is a draft PR, skip integration tests
-        # the idea is that it should not be possible for a PR to be merged without integration tests:
-        # either it's a draft PR (and thus can't be merged), or it isn't (and integration tests will not be skipped)
-        if: github.event.pull_request.draft == false
+  pytest_cov:
+    name: Get test coverage report
+    runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install IDAES plus extensions
         run: |
-          pytest -c pytest.ini -m integration idaes/
-      # TODO: pytest --cov
-      # TODO: coveralls (coverage report)
+          python -m pip install --progress-bar off pip setuptools wheel
+          python -m pip install --progress-bar off -r requirements-dev.txt
+          idaes get-extensions
+          echo "$(idaes bin-directory)" >> "$GITHUB_PATH"
+      - name: Verify installation
+        run: |
+          idaes --version
+          ipopt -v
+      - name: Generate coverage report with Pytest
+        run: |
+          pytest -c pytest.ini idaes/ -m unit --cov
+      - name: Upload coverage report (Codecov)
+        run: |
+          bash <(curl -s https://codecov.io/bash)
   build-docs:
     name: Build Sphinx docs (HTML)
     runs-on: ubuntu-18.04
+    if: 'false'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -105,6 +125,7 @@ jobs:
   pylint:
     name: Run pylint (errors only)
     runs-on: ubuntu-18.04
+    if: 'false'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
