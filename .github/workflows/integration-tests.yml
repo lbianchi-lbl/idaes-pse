@@ -50,7 +50,8 @@ jobs:
             return countApproved;
   decide-if-continue:
     needs: check-trigger
-    if: needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved
+    outputs:
+      should-continue: needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved
     runs-on: ubuntu-latest
     steps:
       - name: Display debug info
@@ -58,6 +59,7 @@ jobs:
           echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
   run-integration:
     needs: decide-if-continue
+    if: needs.decide-if-continue.outputs.should-continue
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
