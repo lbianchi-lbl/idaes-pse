@@ -97,7 +97,7 @@ def test_add_invalid_tags():
     with pytest.raises(ValueError):
         idaeslog.add_log_tag(invalid_tags[0])
     with pytest.raises(ValueError):
-        idaeslog.add_log_tags(invalid_tags)
+        idaeslog.set_log_tags(invalid_tags)
 
 @pytest.mark.skipif(not pyo.SolverFactory('ipopt').available(False), reason="no Ipopt")
 @pytest.mark.unit
