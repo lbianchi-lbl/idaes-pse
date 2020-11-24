@@ -45,9 +45,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install IDAES with dependencies
+      - name: Install IDAES with dev dependencies
         run: |
-          python -m pip install --progress-bar off -r requirements.txt
+          python -m pip install --progress-bar off pip setuptools wheel
+          python -m pip install --progress-bar off -r requirements-dev.txt
       - name: Display IDAES version
         run: |
           idaes --version
