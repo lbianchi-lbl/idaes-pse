@@ -62,7 +62,14 @@ jobs:
         os:
           - ubuntu-18.04
           - windows-latest
+        include:
+          - os: ubuntu-18.04
+            python-version: '3.7'
+            upload-coverage: true
     steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(matrix) }}'
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -87,8 +94,19 @@ jobs:
               ipopt -v
           fi
       - name: Run idaes-pse integration tests
+        if: '!upload-coverage'
         run: |
           pytest -m integration idaes/
+      - name: Run complete test suite with coverage report
+        if: matrix.upload-coverage
+        run: |
+          pytest -c pytest.ini idaes/ --cov
+      - name: Create test coverage report (Codecov)
+        if: matrix.upload-coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          bash <(curl -s https://codecov.io/bash)
       - name: Fetch examples-pse
         run: |
           git clone https://github.com/IDAES/examples-pse.git

@@ -19,7 +19,7 @@ defaults:
 
 jobs:
   run-tests:
-    name: Install and test (py=${{ matrix.python-version }}, os=${{ matrix.os }})
+    name: Install and test (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
@@ -31,13 +31,20 @@ jobs:
         os:
           - ubuntu-18.04
           - windows-latest
+        include:
+          - os: ubuntu-18.04
+            python-version: '3.7'
+            upload-coverage: true
     steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(matrix) }}'
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install IDAES with dependencies
+      - name: Install IDAES with dev dependencies
         run: |
           python -m pip install --progress-bar off pip setuptools wheel
           python -m pip install --progress-bar off -r requirements-dev.txt
@@ -59,18 +66,23 @@ jobs:
           else
               ipopt -v
           fi
-      - name: Run tests (excluding integration)
+      - name: Run tests (excl. integration)
+        if: '!matrix.upload-coverage'
         run: |
           pytest -c pytest.ini -m 'not integration' idaes/
-      - name: Run integration tests
-        # if this is a draft PR, skip integration tests
-        # the idea is that it should not be possible for a PR to be merged without integration tests:
-        # either it's a draft PR (and thus can't be merged), or it isn't (and integration tests will not be skipped)
-        if: github.event.pull_request.draft == false
+      # instead of running tests in a separate job to create the coverage report,
+      # use separate steps to run tests with --cov flag and upload coverage report
+      # to be run on a single matrix replica
+      - name: Run tests (excl. integration) with coverage report
+        if: matrix.upload-coverage
         run: |
-          pytest -c pytest.ini -m integration idaes/
-      # TODO: pytest --cov
-      # TODO: coveralls (coverage report)
+          pytest -c pytest.ini -m 'not integration' idaes/ --cov
+      - name: Create test coverage report (Codecov)
+        if: matrix.upload-coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          bash <(curl -s https://codecov.io/bash)
   build-docs:
     name: Build Sphinx docs (HTML)
     runs-on: ubuntu-18.04
