@@ -62,9 +62,9 @@ jobs:
       - name: Display debug info
         run: |
           echo '${{ toJSON(needs) }}'
-          echo '${{ needs.check-trigger.outputs.decision }}
-          echo '${{ needs.check-trigger.outputs.decision == 'run' }}
-          echo '${{ needs.check-trigger.outputs.decision == 'skip' }}
+          echo '${{ needs.check-trigger.outputs.decision }}'
+          echo '${{ needs.check-trigger.outputs.decision == 'run' }}'
+          echo '${{ needs.check-trigger.outputs.decision == 'skip' }}'
           echo '${{ true || false }}'
           echo '${{ (true || false) }}'
   run-integration:
