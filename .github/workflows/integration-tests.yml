@@ -71,6 +71,7 @@ jobs:
         run: |
           echo '${{ toJSON(needs) }}'
           echo '${{ toJSON(matrix) }}'
+          echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
