@@ -49,7 +49,7 @@ jobs:
             return countApproved;
   run-integration:
     needs: check-trigger
-    if: 'false'
+    if: ${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
