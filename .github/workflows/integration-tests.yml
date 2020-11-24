@@ -69,6 +69,7 @@ jobs:
     steps:
       - name: Display debug info
         run: |
+          echo '${{ toJSON(needs) }}'
           echo '${{ toJSON(matrix) }}'
       - uses: actions/checkout@v2
       - name: Set up Python
