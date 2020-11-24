@@ -25,10 +25,10 @@ defaults:
 
 jobs:
   check-trigger:
-    name: Check 
+    name: Check trigger event
     runs-on: ubuntu-latest
     outputs:
-      scheduled: ${{ github.event_name == 'schedule' }}
+      on-default-branch: ${{ !contains(github.event_name, 'pull_request') }}
       pr-approved: ${{ github.event_name == 'pull_request_review' && steps.get-count-approved.outputs.result >= 2 }}
     steps:
       - uses: actions/checkout@v2
@@ -48,7 +48,7 @@ jobs:
             return countApproved;
   run-integration:
     needs: check-trigger
-    if: needs.check-trigger.outputs.scheduled || needs.check-trigger.outputs.pr-approved
+    if: needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
