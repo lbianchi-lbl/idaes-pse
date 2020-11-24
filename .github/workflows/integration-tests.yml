@@ -53,6 +53,7 @@ jobs:
     outputs:
       should-continue: ${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Display debug info
         run: |
