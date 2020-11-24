@@ -94,7 +94,7 @@ jobs:
               ipopt -v
           fi
       - name: Run idaes-pse integration tests
-        if: '!upload-coverage'
+        if: '!matrix.upload-coverage'
         run: |
           pytest -m integration idaes/
       - name: Run complete test suite with coverage report
