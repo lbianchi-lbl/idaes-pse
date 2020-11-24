@@ -56,7 +56,7 @@ jobs:
     steps:
       - name: Display debug info
         run: |
-          echo '${{ needs }}'
+          echo '${{ toJSON(needs) }}'
           echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
   run-integration:
     needs: decide-if-continue
