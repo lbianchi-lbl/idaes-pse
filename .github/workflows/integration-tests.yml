@@ -31,6 +31,7 @@ jobs:
     outputs:
       on-default-branch: ${{ !contains(github.event_name, 'pull_request') }}
       pr-approved: ${{ github.event_name == 'pull_request_review' && steps.get-count-approved.outputs.result >= 2 }}
+      should-run: ${{ false }}
     steps:
       - uses: actions/checkout@v2
       - name: Get count of approved reviews
@@ -49,7 +50,7 @@ jobs:
             return countApproved;
   run-integration:
     needs: check-trigger
-    if: ${{ success() && (needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved) }}
+    if: needs.check-trigger.outputs.should-run
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
