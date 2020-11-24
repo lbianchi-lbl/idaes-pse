@@ -32,11 +32,10 @@ jobs:
         os:
           - ubuntu-18.04
           - windows-latest
-        upload-coverage: [false]
         include:
           - os: ubuntu-18.04
-          - python-version: '3.7'
-          - upload-coverage: true
+            python-version: '3.7'
+            upload-coverage: true
     steps:
       - name: Display debug info
         run: |
