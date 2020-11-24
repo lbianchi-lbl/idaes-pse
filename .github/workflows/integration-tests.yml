@@ -58,9 +58,11 @@ jobs:
         run: |
           echo '${{ toJSON(needs) }}'
           echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
+      - name: Test condition
+        run: |
+          test '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}' = 'true'
   run-integration:
     needs: decide-if-continue
-    if: needs.decide-if-continue.outputs.should-continue
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
