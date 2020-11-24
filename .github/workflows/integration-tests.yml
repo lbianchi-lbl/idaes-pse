@@ -59,7 +59,7 @@ jobs:
           echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
   run-integration:
     needs: decide-if-continue
-    if: needs.decide-if-continue.outputs.should-continue
+    if: needs.decide-if-continue.outputs.should-continue == 'true'
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
