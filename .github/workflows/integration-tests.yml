@@ -52,6 +52,10 @@ jobs:
     needs: check-trigger
     if: needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved
     runs-on: ubuntu-latest
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
   run-integration:
     needs: decide-if-continue
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
