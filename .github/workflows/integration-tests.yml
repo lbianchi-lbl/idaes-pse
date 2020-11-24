@@ -60,7 +60,7 @@ jobs:
           echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
   run-integration:
     needs: decide-if-continue
-    if: needs.decide-if-continue.outputs.should-continue == 'true'
+    if: needs.decide-if-continue.outputs.should-continue
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -82,7 +82,7 @@ jobs:
         run: |
           echo '${{ toJSON(needs) }}'
           echo '${{ toJSON(matrix) }}'
-          echo '${{ needs.check-trigger.outputs.on-default-branch || needs.check-trigger.outputs.pr-approved }}'
+          echo '${{ needs.decide-if-continue.outputs.should-continue }}'
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
