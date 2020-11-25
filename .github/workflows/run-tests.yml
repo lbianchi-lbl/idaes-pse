@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       verdict: ${{ steps.check-trigger.outputs.verdict }}
+      choices: ${{ steps.check-trigger.outputs.choices }}
       pytest-markexpr: ${{ steps.check-trigger.outputs.pytest-markexpr }}
       pytest-display: ${{ steps.check-trigger.outputs.pytest-display }}
     steps:
@@ -101,6 +102,7 @@ jobs:
             }
             console.log(`The verdict of the decision is: "${verdict}"`);
             core.setOutput('verdict', verdict);
+            core.setOutput('choices', VerdictChoices);
 
             var markexpr = undefined;
             var markDisplay = undefined;
@@ -129,12 +131,14 @@ jobs:
           echo 'needs.decide.outputs.verdict: ${{ needs.decide.outputs.verdict }}'
           echo 'needs.decide.outputs.pytest-display: ${{ needs.decide.outputs.pytest-display }}'
           echo 'needs.decide.outputs.pytest-markexpr: ${{ needs.decide.outputs.pytest-markexpr }}'
-          echo 'fromJSON(env.DECIDE_CHOICES): ${{ fromJSON(env.DECIDE_CHOICES) }}'
-          echo 'fromJSON(env.DECIDE_CHOICES).skip: ${{ fromJSON(env.DECIDE_CHOICES).skip }}'
-          echo 'needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip: ${{ needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip }}'
+          echo 'needs.decide.outputs.choices: ${{ needs.decide.outputs.choices }}'
+          echo 'needs.decide.outputs.verdict != needs.decide.outputs.choices.skip: ${{ needs.decide.outputs.verdict != needs.decide.outputs.choices.skip }}'
+          echo 'fromJSON(needs.decide.outputs.choices): ${{ fromJSON(needs.decide.outputs.choices) }}'
+          echo 'fromJSON(needs.decide.outputs.choices).skip: ${{ fromJSON(needs.decide.outputs.choices).skip }}'
+          echo 'needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip: ${{ needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip }}'
   pytest:
     needs: decide
-    if: needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip
+    if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
     name: Tests (${{ needs.decide.outputs.pytest-display }}) (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -166,7 +170,7 @@ jobs:
   build-docs:
     name: Build Sphinx docs
     needs: decide
-    if: needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip
+    if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -191,7 +195,7 @@ jobs:
   pylint:
     name: pylint (errors only)
     needs: decide
-    if: needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip
+    if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
