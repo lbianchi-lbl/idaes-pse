@@ -82,7 +82,7 @@ jobs:
       - name: Set up idaes
         uses: ./.github/actions/setup-idaes
         with:
-          install-target: -r requirements.dev
+          install-target: -r requirements-dev.txt
       - name: Run pytest (not integration) with cov
         run: |
           pytest -m 'not integration' --cov
