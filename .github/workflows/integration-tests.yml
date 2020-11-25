@@ -36,7 +36,7 @@ jobs:
     name: Check trigger event
     runs-on: ubuntu-latest
     outputs:
-      decision: ${{ steps.get-run-or-skip.outputs.result }}
+      verdict: ${{ steps.get-run-or-skip.outputs.result }}
     steps:
       - name: Display debug info
         run: |
@@ -48,10 +48,17 @@ jobs:
         with:
           result-encoding: string
           script: |
+            const VerdictChoice = {
+              run: 'run',
+              skip: 'skip'
+            };
             var shouldRun = null;
             const isPRReview = context.eventName == 'pull_request_review';
             const isReviewRequest = context.eventName == 'pull_request' && context.payload.action == 'review_requested';
             if (isPRReview) {
+              const minCountApproved = 2;
+              console.log('Workflow was triggered by a PR review submission.')
+              console.log(`It should run if ${minCountApproved} or more approvals for the PR are present.`);
               const getCountApproved = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
               const countApproved = await getCountApproved({
                 github: github,
@@ -59,17 +66,20 @@ jobs:
                 repo: context.repo.repo,
                 pullNumber: context.payload.pull_request.number,
               });
-              const isApproved = countApproved >= 2;
-              shouldRun = isApproved;
+              shouldRun = countApproved >= minCountApproved;
             } else if (isReviewRequest) {
+              const sentinelUser = 'idaes-build';
+              console.log('Workflow was triggered by a PR review request.')
+              console.log(`It should run if user "${sentinelUser}" is among the requested reviewers.`);
               const reqReviewers = context.payload.pull_request.requested_reviewers || [];
               shouldRun = reqReviewers.some(user => user.login == 'idaes-build');
             } else {
+              console.log(`Workflow should run after being triggered by event: ${context.eventName}`);
               shouldRun = true;
             }
-            const decision = shouldRun ? 'run' : 'skip';
-            console.log(`decision: ${decision}`);
-            return decision;
+            const verdict = shouldRun ? VerdictChoice.run : VerdictChoice.skip;
+            console.log(`Verdict: ${verdict}`);
+            return verdict;
   debug-check-trigger:
     name: Debug info from check-trigger job
     needs: check-trigger
@@ -78,12 +88,11 @@ jobs:
       - name: Display debug info
         run: |
           echo '${{ toJSON(needs) }}'
-          echo '${{ needs.check-trigger.outputs.decision }}'
-          echo '${{ needs.check-trigger.outputs.decision == 'run' }}'
-          echo '${{ needs.check-trigger.outputs.decision == 'skip' }}'
+          echo 'check-trigger.outputs.verdict: ${{ needs.check-trigger.outputs.verdict }}'
+          echo 'check-trigger.outputs.verdict == "run": ${{ needs.check-trigger.outputs.verdict == 'run' }}'
   run-integration:
     needs: check-trigger
-    if: needs.check-trigger.outputs.decision == 'run'
+    if: needs.check-trigger.outputs.verdict == 'run'
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
