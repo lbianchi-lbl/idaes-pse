@@ -137,7 +137,7 @@ jobs:
           echo 'fromJSON(needs.decide.outputs.choices).skip: ${{ fromJSON(needs.decide.outputs.choices).skip }}'
   pytest:
     needs: decide
-    if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
+    if: needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip
     name: Tests (${{ needs.decide.outputs.pytest-display }}) (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -169,7 +169,7 @@ jobs:
   build-docs:
     name: Build Sphinx docs
     needs: decide
-    if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
+    if: needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -194,7 +194,7 @@ jobs:
   pylint:
     name: pylint (errors only)
     needs: decide
-    if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
+    if: needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
