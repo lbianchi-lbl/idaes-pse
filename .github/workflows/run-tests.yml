@@ -74,7 +74,7 @@ jobs:
             console.log(`${countApproved} approving reviews.`);
             return countApproved;
       - name: Check if a review from idaes-build was requested
-        if: always() && ((github.event.requested_reviewer || {}).login == 'idaes-build')
+        if: always() && (github.event.requested_reviewer.login == 'idaes-build')
         run: |
           echo "The requested reviewer was idaes-build"
   check-rapid:
