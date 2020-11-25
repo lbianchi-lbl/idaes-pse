@@ -132,10 +132,9 @@ jobs:
           echo 'needs.decide.outputs.pytest-display: ${{ needs.decide.outputs.pytest-display }}'
           echo 'needs.decide.outputs.pytest-markexpr: ${{ needs.decide.outputs.pytest-markexpr }}'
           echo 'needs.decide.outputs.choices: ${{ needs.decide.outputs.choices }}'
-          echo 'needs.decide.outputs.verdict != needs.decide.outputs.choices.skip: ${{ needs.decide.outputs.verdict != needs.decide.outputs.choices.skip }}'
+          echo 'needs.decide.outputs.choices.skip: ${{ needs.decide.outputs.choices.skip }}'
           echo 'fromJSON(needs.decide.outputs.choices): ${{ fromJSON(needs.decide.outputs.choices) }}'
           echo 'fromJSON(needs.decide.outputs.choices).skip: ${{ fromJSON(needs.decide.outputs.choices).skip }}'
-          echo 'needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip: ${{ needs.decide.outputs.verdict != fromJSON(needs.decide.outputs.choices).skip }}'
   pytest:
     needs: decide
     if: needs.decide.outputs.verdict != needs.decide.outputs.choices.skip
