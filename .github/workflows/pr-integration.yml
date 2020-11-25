@@ -1,0 +1,82 @@
+name: PR approved
+
+on:
+  pull_request_review:
+    types:
+      - submitted
+
+jobs:
+  decide:
+    name: Decide if integration tests should be run
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check-reviews.outputs.result }}
+    steps:
+      - name: Check reviews to see if tests should run
+        id: check-reviews
+        uses: actions/github-script@master
+        with:
+          script: |
+            const ReviewState = {
+              dismissed: "DISMISSED",
+              approved: "APPROVED",
+            };
+            const minCountApproved = 2;
+            const specialReviewer = 'idaes-build';
+
+            function selectLatestPerUser(reviews) {
+              const latestByUser = {};
+              reviews.forEach((r) => {
+                // the reviews are in chronological order (earliest to latest)
+                // so to get the latest for each user we can use an Object as a map and loop over all reviews
+                // at each iteration, a more recent review for that user will replace an earlier one set before it
+                latestByUser[r.user.login] = r;
+              });
+              return Object.values(latestByUser);
+            }
+            const {data: reviews} = await github.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const latestReviews = selectLatestPerUser(reviews);
+            console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
+            // could also check if special reviewer is mentioned in the review body
+            const hasSpecialReviewer = latestReviews.some(r => r.user.login == specialReviewer);
+            const countApproved = latestReviews.filter(r => r.state === ReviewState.approved).length;
+            console.log(`${countApproved} approving reviews (at least ${minCountApproved} required).`);
+            console.log(`Has special reviewer ${specialReviewer}: ${specialReviewer}`);
+            const verdict = (countApproved >= minCountApproved) || hasSpecialReviewer;
+            console.log(`Should run: ${verdict}`);
+            return verdict;
+  pytest-integration:
+    name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    if: contains(needs.decide.outputs.should-run, 'true')
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+        os:
+          - ubuntu-18.04
+          - windows-latest
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(matrix) }}'
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          install-target: '.'
+      - name: Run pytest (integration)
+        run: |
+          pytest -m integration
