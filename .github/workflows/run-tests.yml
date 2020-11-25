@@ -37,7 +37,7 @@ jobs:
   check-integration:
     name: Check if integration tests should be run
     runs-on: ubuntu-latest
-    if: contains(['submitted', 'review_requested'], github.event.action)
+    if: contains('[submitted, review_requested]', github.event.action)
     outputs:
       is-pr-approved: ${{ steps.get-count-approved.outputs.result >= 2 }}
     steps:
@@ -80,7 +80,7 @@ jobs:
   check-rapid:
     name: Check if rapid tests should be run
     runs-on: ubuntu-latest
-    if: contains(['ready_for_review', 'synchronize'], github.event.action)
+    if: contains('[ready_for_review, synchronize]', github.event.action)
     steps:
       - name: Display debug information
         run: |
