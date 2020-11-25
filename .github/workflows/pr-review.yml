@@ -24,6 +24,22 @@ jobs:
             const minCountApproved = 2;
             const specialReviewer = 'idaes-build';
 
+            // check if special reviewer is mentioned in body of current (triggering) review
+            const review = context.payload;
+            const reviewBody = review.body || '';
+            console.log(`Body of the review: "${reviewBody}"`);
+            // this could be made more specific, e.g. requiring @-mentioning or additional keywords
+            const isSpecialText = text => text.includes(specialReviewer);
+            const hasSpecialText = isSpecialText(reviewBody);
+            console.log(`Review has special text: ${hasSpecialText}.`);
+
+            // check if special reviewer is among the reviewers
+            const reqReviewers = context.payload.pull_request.requested_reviewers;
+            console(reqReviewers);
+            const hasSpecialReviewer = reqReviewers.some(user => user.login == specialReviewer);
+            console.log(`Has special reviewer ${specialReviewer}: ${specialReviewer}`);
+
+            // check count of approved reviews after selecting latest for each reviewer
             function selectLatestPerUser(reviews) {
               const latestByUser = {};
               reviews.forEach((r) => {
@@ -41,13 +57,12 @@ jobs:
             });
             const latestReviews = selectLatestPerUser(reviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
-            // could also check if special reviewer is mentioned in the review body
-            console.log(latestReviews);
-            const hasSpecialReviewer = latestReviews.some(r => r.user.login == specialReviewer);
+
             const countApproved = latestReviews.filter(r => r.state === ReviewState.approved).length;
             console.log(`${countApproved} approving reviews (at least ${minCountApproved} required).`);
-            console.log(`Has special reviewer ${specialReviewer}: ${specialReviewer}`);
-            const verdict = (countApproved >= minCountApproved) || hasSpecialReviewer;
+
+            // if any of these conditions is fulfilled, the tests should run
+            const verdict = (countApproved >= minCountApproved) || hasSpecialText || hasSpecialReviewer;
             console.log(`Should run: ${verdict}`);
             return verdict;
   pytest-integration:
