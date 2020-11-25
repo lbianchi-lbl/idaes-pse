@@ -8,11 +8,27 @@ on:
       - ready_for_review
       # synchronize occurs whenever commits are pushed to the PR branch
       - synchronize
+      - assigned
 
 jobs:
+  check-rapid:
+    name: check if tests (non-integration) should run
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.sender.login, 'idaes-')"
+    steps:
+      - name: notify
+        run: echo "The non-integration tests will run"
+  check-integration:
+    name: check if integration tests should run
+    runs-on: ubuntu-latest
+    if: "contains(github.event.sender.login, 'idaes-')"
+    steps:
+      - name: notify
+        run: echo "The integration tests will run"
   pytest:
     name: Tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    needs: [check-rapid]
     strategy:
       fail-fast: false
       matrix:
@@ -41,6 +57,7 @@ jobs:
   build-docs:
     name: Build Sphinx docs
     runs-on: ubuntu-latest
+    needs: [check-rapid]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -62,6 +79,7 @@ jobs:
   pylint:
     name: pylint (errors only)
     runs-on: ubuntu-latest
+    needs: [check-rapid]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -71,6 +89,7 @@ jobs:
       - name: Run pylint
         uses: ./.github/actions/pylint
   pytest-coverage:
+    needs: [check-rapid]
     name: Run pytest with coverage report
     runs-on: ubuntu-latest
     steps:
@@ -91,5 +110,55 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           bash <(curl -s https://codecov.io/bash)
-
+  pytest-integration:
+    name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [check-integration]
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+        os:
+          - ubuntu-18.04
+          - windows-latest
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(matrix) }}'
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          install-target: '.'
+      - name: Run pytest (not integration)
+        run: |
+          pytest -m 'integration'
+  pytest-coverage-complete:
+    name: Run pytest (complete) with coverage report
+    runs-on: ubuntu-latest
+    needs: [check-integration]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          install-target: -r requirements-dev.txt
+      - name: Run pytest (complete) with cov
+        run: |
+          pytest --cov
+      - name: Upload coverage report to Codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          bash <(curl -s https://codecov.io/bash)
 

@@ -16,6 +16,7 @@ jobs:
         id: check-reviews
         uses: actions/github-script@master
         with:
+          github-token: ${{ secrets.IDAES_BUILD_TOKEN }}
           script: |
             const ReviewState = {
               dismissed: "DISMISSED",
@@ -79,63 +80,12 @@ jobs:
               || requestedSpecialReviewer
             );
             console.log(`Should run: ${verdict}`);
+            if (verdict) {
+              await github.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                assignees: ['idaes-debug'],
+              });
+            }
             return verdict;
-  check-skip:
-    name: Check if dependent jobs can be skipped
-    runs-on: ubuntu-latest
-    needs: [decide]
-    if: contains(needs.decide.outputs.should-run, 'true')
-    steps:
-      - name: Display info
-        run: echo "Dependent jobs will not be skipped based on this job"
-  pytest-integration:
-    name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: [check-skip]
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version:
-          - '3.6'
-          - '3.7'
-        os:
-          - ubuntu-18.04
-          - windows-latest
-    steps:
-      - name: Display debug info
-        run: |
-          echo '${{ toJSON(matrix) }}'
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Set up idaes
-        uses: ./.github/actions/setup-idaes
-        with:
-          install-target: '.'
-      - name: Run pytest (integration)
-        run: |
-          pytest -m integration
-  pytest-coverage:
-    name: Run pytest with coverage report
-    runs-on: ubuntu-latest
-    needs: [check-skip]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.7'
-      - name: Set up idaes
-        uses: ./.github/actions/setup-idaes
-        with:
-          install-target: -r requirements-dev.txt
-      - name: Run pytest (complete) with cov
-        run: |
-          pytest --cov
-      - name: Upload coverage report to Codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: |
-          bash <(curl -s https://codecov.io/bash)
