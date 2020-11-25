@@ -146,10 +146,13 @@ jobs:
           echo '${{ toJSON(needs) }}'
           echo '${{ toJSON(matrix) }}'
       - uses: actions/checkout@v2
-      - name: Set up idaes
-        uses: ./.github/actions/setup-idaes.yml
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
           install-target: '.'
       - name: Run pytest (${{ needs.decide.outputs.pytest-display }})
         run: |
@@ -161,8 +164,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
       - name: Set up idaes
-        uses: ./.github/actions/setup-idaes.yml
+        uses: ./.github/actions/setup-idaes
         with:
           install-target: -r requirements-dev.txt
       - name: Build Sphinx docs (HTML)
@@ -182,9 +189,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up idaes
-        uses: ./.github/actions/setup-idaes.yml
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
+          python-version: '3.7'
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          # TODO pylint version will have to be pinned
           install-target: pylint -r requirements.txt
       - name: Run pylint
         run: |
