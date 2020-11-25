@@ -71,9 +71,9 @@ jobs:
               const sentinelUser = 'idaes-build';
               console.log('Workflow was triggered by a PR review request.')
               console.log(`It should run if user "${sentinelUser}" is the requested reviewer.`);
-              const reqReviewer = context.payload.requested_reviewer || {};
+              const reqReviewer = (context.payload.requested_reviewer || {}).login;
               console.log(`Requested reviewer: ${reqReviewer}`);
-              shouldRun = reqReviewer.login == sentinelUser;
+              shouldRun = reqReviewer == sentinelUser;
             } else {
               console.log(`Workflow should run after being triggered by event: ${context.eventName}`);
               shouldRun = true;
