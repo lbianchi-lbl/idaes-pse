@@ -75,4 +75,26 @@ jobs:
       - name: Run pylint
         run: |
           pylint -E --ignore-patterns="test_.*" idaes || true
+  pytest-coverage:
+    name: Run pytest with coverage report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          install-target: -r requirements.dev
+      - name: Run pytest (not integration) with cov
+        run: |
+          pytest -m 'not integration' --cov
+      - name: Upload coverage report to Codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+
 
