@@ -1,0 +1,192 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      # when PR is opened not in draft mode, or when it's taken out of draft mode
+      - ready_for_review
+      # push to PR branch
+      - synchronize
+      - review_requested
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git hash (optional)
+        required: false
+  repository_dispatch:
+    # to run this, send a POST API call at repos/IDAES/idaes-pse/dispatches with the specified event_type
+    # e.g. `gh repos/IDAES/idaes-pse/dispatches -F event_type=integration_tests_requested`
+    types: [run_tests]
+  schedule:
+    # run daily at 5:00 am UTC (12 am ET/9 pm PT)
+    - cron: '0 5 * * *'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  decide:
+    name: Decide which tests to run based on trigger event
+    runs-on: ubuntu-latest
+    outputs:
+      action: ${{ steps.check-trigger.outputs.action }}
+      pytest-markexpr: ${{ steps.check-trigger.outputs.pytest-markexpr }}
+      pytest-display: ${{ steps.check-trigger.outputs.pytest-display }}
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(github.event) }}'
+      - uses: actions/checkout@v2
+      - id: check-trigger
+        name: Check trigger and decide
+        uses: actions/github-script@master
+        with:
+          result-encoding: string
+          script: |
+            const PytestMarkexpr = {
+              integration: 'integration',
+              not_integration: 'not integration',
+              all: 'integration or not integration',
+              empty: '',
+            };
+            const Action = {
+              skip: 'SKIP',
+              run_rapid: 'RUN_RAPID',
+              run_integration: 'RUN_INTEGRATION',
+              run_complete: 'RUN_COMPLETE',
+            };
+
+            const eventName = context.eventName;
+            const eventType = context.payload.action;
+            var action = null;
+            console.log(`The workflow has been triggered by a ${eventName}` event.`);
+            if (eventName == 'pull_request') {
+              if (eventType == 'review_requested') {
+                const sentinelUser = 'idaes-build';
+                console.log('A review was requested for the PR.');
+                console.log(`The integration tests will be run if the requested reviewer is ${sentinelUser}.`);
+                const reqReviewer = (context.payload.requested_reviewer || {}).login;
+                console.log(`Requested reviewer: ${reqReviewer}`);
+                const isSentinelUser = reqReviewer == sentinelUser;
+                action = (reqReviewer == sentinelUser) ? Action.run_integration : Action.skip;
+              } else {
+                console.log(`The event type is "${eventType}"; the standard (rapid) tests will be run`);
+                // for all other PR triggers, run the rapid tests
+                action = Action.run_rapid;
+              }
+            } else if (eventName == 'pull_request_review') {
+              const minCountApproved = 2;
+              console.log(`The integration tests will be run if the PR is approved (${minCountApproved} or more approved reviews).`);
+              const getCountApproved = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/countApproved.js`);
+              const countApproved = await getCountApproved({
+                github: github,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pullNumber: context.payload.pull_request.number,
+              });
+              console.log(`Approved reviews: ${countApproved}`);
+              action = (countApproved >= minCountApproved) ? Action.run_integration : Action.skip;
+            } else {
+              // for all other triggers (at this point, mainly nightlies) we want to run the complete test suite
+              // we could add more specific behavior later by looking at input parameters for e.g. workflow_dispatch and repository_dispatch
+              console.log('The complete test suite will be run.');
+              action = Action.run_complete;
+            }
+            console.log(`The decided action is: "${action}"`);
+            core.setOutput('action', action);
+
+            var markexpr = '';
+            var markDisplay = '';
+            if (action == Action.run_complete) {
+              markexpr = PytestMarkexpr.all;
+              markDisplay = 'all';
+            } else if (action == Action.run_integration) {
+              markexpr = PytestMarkexpr.integration;
+              markDisplay = markexpr;
+            } else if (action == Action.run_rapid) {
+              markexpr = PytestMarkexpr.not_integration;
+              markDisplay = markexpr;
+            }
+            console.log(`markexpr for pytest: ${markexpr} (displayed as ${markDisplay})`);
+            core.setOutput('pytest-markexpr', markexpr);
+            core.setOutput('pytest-display', markDisplay);
+
+  debug-decide:
+    name: Debug info from decide job
+    needs: decide
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(needs) }}'
+          echo 'needs.decide.outputs.action: ${{ needs.decide.outputs.action }}'
+          echo 'needs.decide.outputs.pytest-display: ${{ needs.decide.outputs.pytest-display }}'
+          echo 'needs.decide.outputs.pytest-markexpr: ${{ needs.decide.outputs.pytest-markexpr }}'
+  pytest:
+    needs: decide
+    if: needs.decide.outputs.action != 'skip'
+    name: Tests (${{ needs.decide.outputs.pytest-display }}) (py${{ matrix.python-version }}/${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+        os:
+          - ubuntu-18.04
+          - windows-latest
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(matrix) }}'
+      - uses: actions/checkout@v2
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes.yml
+        with:
+          python-version: ${{ matrix.python-version }}
+          install-target: '.'
+      - name: Run pytest (${{ needs.decide.outputs.pytest-display }})
+        run: |
+          pytest -m ${{ needs.decide.outputs.pytest-markexpr }}
+  build-docs:
+    name: Build Sphinx docs
+    needs: decide
+    if: needs.decide.outputs.action != 'skip'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes.yml
+        with:
+          install-target: -r requirements-dev.txt
+      - name: Build Sphinx docs (HTML)
+        run: |
+          cd docs/
+          python build.py
+      - name: Publish built docs
+        uses: actions/upload-artifact@v2
+        with:
+          name: idaes-pse-docs-html
+          path: docs/build/html/
+          retention-days: 7
+  pylint:
+    name: pylint (errors only)
+    needs: decide
+    if: needs.decide.outputs.action != 'skip'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes.yml
+        with:
+          install-target: pylint -r requirements.txt
+      - name: Run pylint
+        run: |
+          pylint -E --ignore-patterns="test_.*" idaes || true
+
