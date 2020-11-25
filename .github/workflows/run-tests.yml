@@ -33,12 +33,15 @@ defaults:
   run:
     shell: bash
 
+env:
+  DECIDE_CHOICES: '{"skip": "SKIP", "run_rapid": "RUN_RAPID", "run_integration": "RUN_INTEGRATION", "run_complete": "RUN_COMPLETE"}'
+
 jobs:
   decide:
     name: Decide which tests to run based on trigger event
     runs-on: ubuntu-latest
     outputs:
-      action: ${{ steps.check-trigger.outputs.action }}
+      verdict: ${{ steps.check-trigger.outputs.verdict }}
       pytest-markexpr: ${{ steps.check-trigger.outputs.pytest-markexpr }}
       pytest-display: ${{ steps.check-trigger.outputs.pytest-display }}
     steps:
@@ -58,16 +61,11 @@ jobs:
               all: 'integration or not integration',
               empty: '',
             };
-            const Action = {
-              skip: 'SKIP',
-              run_rapid: 'RUN_RAPID',
-              run_integration: 'RUN_INTEGRATION',
-              run_complete: 'RUN_COMPLETE',
-            };
+            const VerdictChoices = JSON.parse(process.env.DECIDE_CHOICES);
 
             const eventName = context.eventName;
             const eventType = context.payload.action;
-            var action = null;
+            var verdict = null;
             console.log(`The workflow has been triggered by a ${eventName} event.`);
             if (eventName == 'pull_request') {
               if (eventType == 'review_requested') {
@@ -77,11 +75,11 @@ jobs:
                 const reqReviewer = (context.payload.requested_reviewer || {}).login;
                 console.log(`Requested reviewer: ${reqReviewer}`);
                 const isSentinelUser = reqReviewer == sentinelUser;
-                action = (reqReviewer == sentinelUser) ? Action.run_integration : Action.skip;
+                verdict = (reqReviewer == sentinelUser) ? VerdictChoices.run_integration : VerdictChoices.skip;
               } else {
                 console.log(`The event type is "${eventType}"; the standard (rapid) tests will be run`);
                 // for all other PR triggers, run the rapid tests
-                action = Action.run_rapid;
+                verdict = VerdictChoices.run_rapid;
               }
             } else if (eventName == 'pull_request_review') {
               const minCountApproved = 2;
@@ -94,29 +92,29 @@ jobs:
                 pullNumber: context.payload.pull_request.number,
               });
               console.log(`Approved reviews: ${countApproved}`);
-              action = (countApproved >= minCountApproved) ? Action.run_integration : Action.skip;
+              verdict = (countApproved >= minCountApproved) ? VerdictChoices.run_integration : VerdictChoices.skip;
             } else {
               // for all other triggers (at this point, mainly nightlies) we want to run the complete test suite
               // we could add more specific behavior later by looking at input parameters for e.g. workflow_dispatch and repository_dispatch
               console.log('The complete test suite will be run.');
-              action = Action.run_complete;
+              verdict = VerdictChoices.run_complete;
             }
-            console.log(`The decided action is: "${action}"`);
-            core.setOutput('action', action);
+            console.log(`The verdict of the decision is: "${verdict}"`);
+            core.setOutput('verdict', verdict);
 
-            var markexpr = '';
-            var markDisplay = '';
-            if (action == Action.run_complete) {
+            var markexpr = undefined;
+            var markDisplay = undefined;
+            if (verdict == VerdictChoices.run_complete) {
               markexpr = PytestMarkexpr.all;
               markDisplay = 'all';
-            } else if (action == Action.run_integration) {
+            } else if (verdict == VerdictChoices.run_integration) {
               markexpr = PytestMarkexpr.integration;
               markDisplay = markexpr;
-            } else if (action == Action.run_rapid) {
+            } else if (verdict == VerdictChoices.run_rapid) {
               markexpr = PytestMarkexpr.not_integration;
               markDisplay = markexpr;
             }
-            console.log(`markexpr for pytest: ${markexpr} (displayed as ${markDisplay})`);
+            console.log(`markexpr for pytest: "${markexpr}" (displayed as "${markDisplay}")`);
             core.setOutput('pytest-markexpr', markexpr);
             core.setOutput('pytest-display', markDisplay);
 
@@ -128,12 +126,15 @@ jobs:
       - name: Display debug info
         run: |
           echo '${{ toJSON(needs) }}'
-          echo 'needs.decide.outputs.action: ${{ needs.decide.outputs.action }}'
+          echo 'needs.decide.outputs.verdict: ${{ needs.decide.outputs.verdict }}'
           echo 'needs.decide.outputs.pytest-display: ${{ needs.decide.outputs.pytest-display }}'
           echo 'needs.decide.outputs.pytest-markexpr: ${{ needs.decide.outputs.pytest-markexpr }}'
+          echo 'fromJSON(env.DECIDE_CHOICES): ${{ fromJSON(env.DECIDE_CHOICES) }}'
+          echo 'fromJSON(env.DECIDE_CHOICES).skip: ${{ fromJSON(env.DECIDE_CHOICES).skip }}'
+          echo 'needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip: ${{ needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip }}'
   pytest:
     needs: decide
-    if: needs.decide.outputs.action != 'skip'
+    if: needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip
     name: Tests (${{ needs.decide.outputs.pytest-display }}) (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -165,7 +166,7 @@ jobs:
   build-docs:
     name: Build Sphinx docs
     needs: decide
-    if: needs.decide.outputs.action != 'skip'
+    if: needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -190,7 +191,7 @@ jobs:
   pylint:
     name: pylint (errors only)
     needs: decide
-    if: needs.decide.outputs.action != 'skip'
+    if: needs.decide.outputs.verdict != fromJSON(env.DECIDE_CHOICES).skip
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
