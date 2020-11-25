@@ -23,9 +23,17 @@ jobs:
             };
             const minCountApproved = 2;
             const specialReviewer = 'idaes-build';
-
-            // check if special reviewer is mentioned in body of current (triggering) review
+            // current review, i.e. the one triggering the workflow
             const review = context.payload;
+            const pullRequest = review.pull_request;
+
+            // check if current review was submitted by special reviewer
+            const submittedBy = review.sender.login;
+            console.log(`Review submitted by: ${submittedBy}`)
+            const submittedBySpecialReviewer = submittedBy === specialReviewer;
+            console.log(`Review was submitted by special reviewer ${specialReviewer}: ${submittedBySpecialReviewer}`);
+
+            // check if special reviewer is mentioned in body of current review
             const reviewBody = review.body || '';
             console.log(`Body of the review: "${reviewBody}"`);
             // this could be made more specific, e.g. requiring @-mentioning or additional keywords
@@ -33,11 +41,11 @@ jobs:
             const hasSpecialText = isSpecialText(reviewBody);
             console.log(`Review has special text: ${hasSpecialText}.`);
 
-            // check if special reviewer is among the reviewers
-            const reqReviewers = context.payload.pull_request.requested_reviewers;
-            console(reqReviewers);
-            const hasSpecialReviewer = reqReviewers.some(user => user.login == specialReviewer);
-            console.log(`Has special reviewer ${specialReviewer}: ${specialReviewer}`);
+            // check if special reviewer is among the requested reviewer for this PR (independently from the current review)
+            const reqReviewers = pullRequest.requested_reviewers;
+            console.log(reqReviewers);
+            const requestedSpecialReviewer = reqReviewers.some(user => user.login == specialReviewer);
+            console.log(`Special reviewer ${specialReviewer} is requested: ${requestedSpecialReviewer}`);
 
             // check count of approved reviews after selecting latest for each reviewer
             function selectLatestPerUser(reviews) {
@@ -53,7 +61,7 @@ jobs:
             const {data: reviews} = await github.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number,
+              pull_number: pullRequest.number,
             });
             const latestReviews = selectLatestPerUser(reviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
@@ -62,14 +70,27 @@ jobs:
             console.log(`${countApproved} approving reviews (at least ${minCountApproved} required).`);
 
             // if any of these conditions is fulfilled, the tests should run
-            const verdict = (countApproved >= minCountApproved) || hasSpecialText || hasSpecialReviewer;
+            // we could in principle save some time with early return on true for each condition instead of calculating all of them
+            const verdict = (
+              countApproved >= minCountApproved
+              || submittedBySpecialReviewer
+              || hasSpecialText
+              || requestedSpecialReviewer
+            );
             console.log(`Should run: ${verdict}`);
             return verdict;
+  check-skip:
+    name: Check if dependent jobs can be skipped
+    runs-on: ubuntu-latest
+    needs: [decide]
+    if: contains(needs.decide.outputs.should-run, 'true')
+    steps:
+      - name: Display info
+        run: echo "Dependent jobs will not be skipped based on this job"
   pytest-integration:
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: [decide]
-    if: contains(needs.decide.outputs.should-run, 'true')
+    needs: [check-skip]
     strategy:
       fail-fast: false
       matrix:
@@ -82,7 +103,6 @@ jobs:
     steps:
       - name: Display debug info
         run: |
-          echo '${{ toJSON(needs) }}'
           echo '${{ toJSON(matrix) }}'
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -99,6 +119,7 @@ jobs:
   pytest-coverage:
     name: Run pytest with coverage report
     runs-on: ubuntu-latest
+    needs: [check-skip]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
