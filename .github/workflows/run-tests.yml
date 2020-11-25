@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(['submitted', 'review_requested'], github.event.action)
     outputs:
-      is-pr-approved: ${{ scripts.get-count-approved.outputs.result >= 2 }}
+      is-pr-approved: ${{ steps.get-count-approved.outputs.result >= 2 }}
     steps:
       - name: Check if has required number of approved reviews
         id: get-count-approved
