@@ -34,10 +34,6 @@ defaults:
     shell: bash
 
 jobs:
-  check-pr-approval:
-    name: Check if PR was approved
-    runs-on: ubuntu-latest
-    if: github.event.action == 'submitted'
   check-integration:
     name: Check if integration tests should be run
     runs-on: ubuntu-latest
