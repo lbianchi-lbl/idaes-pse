@@ -63,7 +63,7 @@ jobs:
             const eventName = context.eventName;
             const eventType = context.payload.action;
             var action = null;
-            console.log(`The workflow has been triggered by a ${eventName}` event.`);
+            console.log(`The workflow has been triggered by a ${eventName} event.`);
             if (eventName == 'pull_request') {
               if (eventType == 'review_requested') {
                 const sentinelUser = 'idaes-build';
