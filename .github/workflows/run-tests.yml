@@ -11,6 +11,11 @@ on:
       # push to PR branch
       - synchronize
       - review_requested
+  pull_request_review:
+    types:
+      - submitted
+      # FIXME "edited" is convenient for testing, but we'll have to see if it couldn't end up being triggered too often
+      - edited
   workflow_dispatch:
     inputs:
       git-ref:
