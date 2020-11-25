@@ -156,7 +156,7 @@ jobs:
           install-target: '.'
       - name: Run pytest (${{ needs.decide.outputs.pytest-display }})
         run: |
-          pytest -m ${{ needs.decide.outputs.pytest-markexpr }}
+          pytest -m '${{ needs.decide.outputs.pytest-markexpr }}'
   build-docs:
     name: Build Sphinx docs
     needs: decide
