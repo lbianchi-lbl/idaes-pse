@@ -23,12 +23,13 @@ jobs:
             };
             const minCountApproved = 2;
             const specialReviewer = 'idaes-build';
+            const reviewEvent = context.payload;
+            const pullRequest = reviewEvent.pull_request;
             // current review, i.e. the one triggering the workflow
-            const review = context.payload;
-            const pullRequest = review.pull_request;
+            const review = reviewEvent.review;
 
             // check if current review was submitted by special reviewer
-            const submittedBy = review.sender.login;
+            const submittedBy = reviewEvent.sender.login;
             console.log(`Review submitted by: ${submittedBy}`)
             const submittedBySpecialReviewer = submittedBy === specialReviewer;
             console.log(`Review was submitted by special reviewer ${specialReviewer}: ${submittedBySpecialReviewer}`);
@@ -58,12 +59,12 @@ jobs:
               });
               return Object.values(latestByUser);
             }
-            const {data: reviews} = await github.pulls.listReviews({
+            const {data: allReviews} = await github.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pullRequest.number,
             });
-            const latestReviews = selectLatestPerUser(reviews);
+            const latestReviews = selectLatestPerUser(allReviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
 
             const countApproved = latestReviews.filter(r => r.state === ReviewState.approved).length;
