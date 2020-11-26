@@ -20,6 +20,8 @@ jobs:
             const ReviewState = {
               dismissed: "DISMISSED",
               approved: "APPROVED",
+              changesRequested: "CHANGES_REQUESTED",
+              commented: "COMMENTED",
             };
             const minCountApproved = 2;
             const specialReviewer = 'idaes-build';
@@ -33,7 +35,10 @@ jobs:
                 // the reviews are in chronological order (earliest to latest)
                 // so to get the latest for each user we can use an Object as a map and loop over all reviews
                 // at each iteration, a more recent review for that user will replace an earlier one set before it
-                latestByUser[r.user.login] = r;
+                // "COMMENTED" reviews are skipped since they don't change the approval status
+                if (r.state != ReviewState.commented) {
+                  latestByUser[r.user.login] = r;
+                }
               });
               return Object.values(latestByUser);
             }
