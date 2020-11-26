@@ -50,7 +50,7 @@ jobs:
             });
             const countFetched = fetchedReviews.length;
             const latestFetched = fetchedReviews[fetchedReviews.length - 1];
-            console.log('Fetched ${countFetched} reviews, latest is:\n${JSON.stringify(latestFetched)}`);
+            console.log(`Fetched ${countFetched} reviews, latest is:\n${JSON.stringify(latestFetched)}`);
 
             const latestReviews = await selectLatestPerUser(fetchedReviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
