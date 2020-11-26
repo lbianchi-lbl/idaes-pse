@@ -6,17 +6,14 @@ on:
       - submitted
 
 jobs:
-  decide:
-    name: Decide if integration tests should be run
+  check-approved:
+    name: Check if PR is approved
     runs-on: ubuntu-latest
-    outputs:
-      should-run: ${{ steps.check-reviews.outputs.result }}
     steps:
-      - name: Check reviews to see if tests should run
-        id: check-reviews
+      - name: Check reviews for approval
+        id: check-approved
         uses: actions/github-script@master
         with:
-          github-token: ${{ secrets.IDAES_BUILD_TOKEN }}
           script: |
             const ReviewState = {
               dismissed: "DISMISSED",
@@ -26,28 +23,7 @@ jobs:
             const specialReviewer = 'idaes-build';
             const reviewEvent = context.payload;
             const pullRequest = reviewEvent.pull_request;
-            // current review, i.e. the one triggering the workflow
-            const review = reviewEvent.review;
-
-            // check if current review was submitted by special reviewer
-            const submittedBy = reviewEvent.sender.login;
-            console.log(`Review submitted by: ${submittedBy}`)
-            const submittedBySpecialReviewer = submittedBy === specialReviewer;
-            console.log(`Review was submitted by special reviewer ${specialReviewer}: ${submittedBySpecialReviewer}`);
-
-            // check if special reviewer is mentioned in body of current review
-            const reviewBody = review.body || '';
-            console.log(`Body of the review: "${reviewBody}"`);
-            // this could be made more specific, e.g. requiring @-mentioning or additional keywords
-            const isSpecialText = text => text.includes(specialReviewer);
-            const hasSpecialText = isSpecialText(reviewBody);
-            console.log(`Review has special text: ${hasSpecialText}.`);
-
-            // check if special reviewer is among the requested reviewer for this PR (independently from the current review)
-            const reqReviewers = pullRequest.requested_reviewers;
-            console.log(reqReviewers);
-            const requestedSpecialReviewer = reqReviewers.some(user => user.login == specialReviewer);
-            console.log(`Special reviewer ${specialReviewer} is requested: ${requestedSpecialReviewer}`);
+            const allReviews = pullRequest.reviews;
 
             // check count of approved reviews after selecting latest for each reviewer
             function selectLatestPerUser(reviews) {
@@ -60,32 +36,57 @@ jobs:
               });
               return Object.values(latestByUser);
             }
-            const {data: allReviews} = await github.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequest.number,
-            });
             const latestReviews = selectLatestPerUser(allReviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
 
             const countApproved = latestReviews.filter(r => r.state === ReviewState.approved).length;
             console.log(`${countApproved} approving reviews (at least ${minCountApproved} required).`);
+            const isApproved = countApproved >= minCountApproved;
+            console.log(`Approved: ${isApproved}`);
+            core.setState('is-approved', isApproved);
+            return isApproved;
 
-            // if any of these conditions is fulfilled, the tests should run
-            // we could in principle save some time with early return on true for each condition instead of calculating all of them
-            const verdict = (
-              countApproved >= minCountApproved
-              || submittedBySpecialReviewer
-              || hasSpecialText
-              || requestedSpecialReviewer
-            );
-            console.log(`Should run: ${verdict}`);
-            if (verdict) {
-              await github.issues.addAssignees({
+      - name: Sync approval label with PR approved reviews
+        uses: actions/github-script@master
+        with:
+          github-token: ${{ secrets.IDAES_BUILD_TOKEN }}
+          script: |
+            const pullRequest = context.payload.pull_request;
+            function ensureLabelPresence({labelName, shouldBePresent}) {
+              const commonArgs = {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pullRequest.number,
-                assignees: ['idaes-debug'],
+              };
+              const {data: labels} = await github.issues.listLabelsOnIssue({
+                ...commonArgs
               });
+              const isPresent = labels.filter(label => label.name === labelName).length == 1;
+              const msg = `Label ${labelName} is ${isPresent ? "" : "not"} present, when it should ${shouldBePresent ? "": "not"} be present.`
+              console.log(msg);
+              const alreadyPresent = shouldBePresent && isPresent;
+              const needsAdding = shouldBePresent && !isPresent;
+              const needsRemoving = !shouldBePresent && isPresent;
+              const alreadyAbsent = !shouldBePresent && !isPresent;
+              if (needsAdding) {
+                console.log(`Label ${labelName} will be added.`);
+                await github.issues.addLabels({
+                  ...commonArgs,
+                  labels: [labelName]
+                });
+              } else if (needsRemoving) {
+                console.log(`Label ${labelName} will be removed.`);
+                await github.issues.removeLabel({
+                  ...commonArgs,
+                  name: labelName,
+                })
+              } else if (alreadyPresent || alreadyAbsent) {
+                console.log(`Label ${labelName} is already in desired state, no further action needed.`);
+              }
             }
-            return verdict;
+            const isApproved = core.getState('is-approved');
+            const labelName = "ci:approved";
+            await ensureLabelPresence({
+              labelName: labelName,
+              shouldBePresent: isApproved,
+            });

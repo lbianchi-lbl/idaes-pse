@@ -2,13 +2,13 @@ name: PR (integration)
 
 on:
   pull_request:
-    types: [assigned]
+    types: [labeled]
 
 jobs:
   check-skip:
     name: check if integration tests should run
     runs-on: ubuntu-latest
-    if: "contains(github.event.sender.login, 'idaes-')"
+    if: contains(github.event.pull_request.labels.*.name, 'ci:approved')
     steps:
       - name: notify
         run: echo "The integration tests will run"
