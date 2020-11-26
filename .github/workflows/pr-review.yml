@@ -14,6 +14,7 @@ jobs:
         id: check-approved
         uses: actions/github-script@master
         with:
+          github-token: ${{ secrets.IDAES_BUILD_TOKEN }}
           script: |
             const ReviewState = {
               dismissed: "DISMISSED",
@@ -47,15 +48,8 @@ jobs:
             console.log(`${countApproved} approving reviews (at least ${minCountApproved} required).`);
             const isApproved = countApproved >= minCountApproved;
             console.log(`Approved: ${isApproved}`);
-            core.setState('is-approved', isApproved);
-            return isApproved;
 
-      - name: Sync approval label with PR approved reviews
-        uses: actions/github-script@master
-        with:
-          github-token: ${{ secrets.IDAES_BUILD_TOKEN }}
-          script: |
-            const pullRequest = context.payload.pull_request;
+
             function ensureLabelPresence({labelName, shouldBePresent}) {
               const commonArgs = {
                 owner: context.repo.owner,
@@ -88,7 +82,6 @@ jobs:
                 console.log(`Label ${labelName} is already in desired state, no further action needed.`);
               }
             }
-            const isApproved = core.getState('is-approved');
             const labelName = "ci:approved";
             await ensureLabelPresence({
               labelName: labelName,
