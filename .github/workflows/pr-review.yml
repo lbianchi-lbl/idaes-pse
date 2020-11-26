@@ -5,6 +5,7 @@ on:
     types:
       - submitted
       - edited
+      - dismissed
 
 jobs:
   check-approved:
