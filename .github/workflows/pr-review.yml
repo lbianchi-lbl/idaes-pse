@@ -44,16 +44,15 @@ jobs:
               return Object.values(latestByUser);
             }
 
-            github.paginate(
+            const fetchedReviews = await github.paginate(
               github.pulls.listReviews, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pullRequest.number,
               })
-              .then((reviews) => {
-                const fetchedReviews = reviews;
-              }
-            );
+              .then(
+               reviews => reviews
+              );
 
             const countFetched = fetchedReviews.length;
             const latestFetched = fetchedReviews[fetchedReviews.length - 1];
