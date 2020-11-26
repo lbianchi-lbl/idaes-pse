@@ -26,7 +26,7 @@ jobs:
             const pullRequest = reviewEvent.pull_request;
 
             // check count of approved reviews after selecting latest for each reviewer
-            function selectLatestPerUser(reviews) {
+            async function selectLatestPerUser(reviews) {
               const latestByUser = {};
               reviews.forEach((r) => {
                 // the reviews are in chronological order (earliest to latest)
@@ -50,7 +50,7 @@ jobs:
             console.log(`Approved: ${isApproved}`);
 
 
-            function ensureLabelPresence({labelName, shouldBePresent}) {
+            async function ensureLabelPresence({labelName, shouldBePresent}) {
               const commonArgs = {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
