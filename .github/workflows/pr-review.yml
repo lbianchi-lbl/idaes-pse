@@ -4,6 +4,7 @@ on:
   pull_request_review:
     types:
       - submitted
+      - edited
 
 jobs:
   check-approved:
@@ -41,7 +42,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: pullRequest.number,
             });
-            const latestReviews = selectLatestPerUser(allReviews);
+            const latestReviews = await selectLatestPerUser(allReviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
 
             const countApproved = latestReviews.filter(r => r.state === ReviewState.approved).length;
