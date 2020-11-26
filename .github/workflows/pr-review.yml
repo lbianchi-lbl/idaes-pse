@@ -43,11 +43,18 @@ jobs:
               });
               return Object.values(latestByUser);
             }
-            const {data: fetchedReviews} = await github.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequest.number,
-            });
+
+            github.paginate(
+              github.pulls.listReviews, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullRequest.number,
+              })
+              .then((reviews) => {
+                const fetchedReviews = reviews;
+              }
+            );
+
             const countFetched = fetchedReviews.length;
             const latestFetched = fetchedReviews[fetchedReviews.length - 1];
             console.log(`Fetched ${countFetched} reviews, latest is:\n${JSON.stringify(latestFetched)}`);
