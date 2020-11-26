@@ -23,7 +23,6 @@ jobs:
             const specialReviewer = 'idaes-build';
             const reviewEvent = context.payload;
             const pullRequest = reviewEvent.pull_request;
-            const allReviews = pullRequest.reviews;
 
             // check count of approved reviews after selecting latest for each reviewer
             function selectLatestPerUser(reviews) {
@@ -36,6 +35,11 @@ jobs:
               });
               return Object.values(latestByUser);
             }
+            const {data: allReviews} = await github.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequest.number,
+            });
             const latestReviews = selectLatestPerUser(allReviews);
             console.log(`There are ${latestReviews.length} up-to-date reviews from unique reviewers.`);
 
