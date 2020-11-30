@@ -4,16 +4,16 @@ on:
   pull_request:
     types: [labeled]
 
-env:
-  PR_APPROVED_LABEL_NAME: 'ci:approved'
-
 jobs:
   check-skip:
     name: Check if integration tests should run
+    # NOTE: the name of the special label is hardcoded here
+    # it would be better to extract it to a more global location, e.g. the workflow-level env context,
+    # but the env context is not available in job-level if expressions (only step-level ones)
+    if: contains(github.event.pull_request.labels.*.name, 'ci:approved')
     runs-on: ubuntu-latest
     steps:
-      - name: Check label
-        if: contains(github.event.pull_request.labels.*.name, env.PR_APPROVED_LABEL_NAME)
+      - name: Notify
         run: echo "The integration tests will run"
   pytest:
     name: Integration tests (py${{ matrix.python-version }}/${{ matrix.os }})
