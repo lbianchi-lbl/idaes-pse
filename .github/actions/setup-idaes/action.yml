@@ -1,4 +1,4 @@
-name: Setup IDAES
+name: Set up IDAES
 description: Install IDAES and extensions
 inputs:
   install-target:
