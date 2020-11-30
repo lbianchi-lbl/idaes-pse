@@ -4,11 +4,14 @@ on:
   pull_request:
     types: [labeled]
 
+env:
+  PR_APPROVED_LABEL_NAME: 'ci:approved'
+
 jobs:
   check-skip:
     name: check if integration tests should run
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'ci:approved')
+    if: contains(github.event.pull_request.labels.*.name, env.PR_APPROVED_LABEL_NAME)
     steps:
       - name: notify
         run: echo "The integration tests will run"

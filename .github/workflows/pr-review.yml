@@ -7,6 +7,9 @@ on:
       - edited
       - dismissed
 
+env:
+  PR_APPROVED_LABEL_NAME: 'ci:approved'
+
 jobs:
   check-approved:
     name: Check if PR is approved
@@ -99,7 +102,7 @@ jobs:
                 console.log(`Label ${labelName} is already in desired state, no further action needed.`);
               }
             }
-            const labelName = "ci:approved";
+            const labelName = process.env.PR_APPROVED_LABEL_NAME;
             await ensureLabelPresence({
               labelName: labelName,
               shouldBePresent: isApproved,
