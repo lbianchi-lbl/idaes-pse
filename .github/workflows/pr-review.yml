@@ -94,10 +94,17 @@ jobs:
                 });
               } else if (needsRemoving) {
                 console.log(`Label ${labelName} will be removed.`);
-                await github.issues.removeLabel({
-                  ...commonArgs,
-                  name: labelName,
-                })
+                try {
+                  await github.issues.removeLabel({
+                    ...commonArgs,
+                    name: labelName,
+                  });
+                } catch (error) {
+                  if (error.status === 404) {
+                    console.log(`Could not remove label ${labelName} (label not found).`);
+                    console.log('This is generally not an issue, and is probably due to the label being removed while this workflow was running.');
+                  }
+                }
               } else if (alreadyPresent || alreadyAbsent) {
                 console.log(`Label ${labelName} is already in desired state, no further action needed.`);
               }
