@@ -84,17 +84,13 @@ jobs:
         uses: ./.github/actions/setup-idaes
         with:
           install-target: -r requirements-dev.txt
-      - name: Install other dependencies
-        run: |
-          sudo apt update
-          sudo apt install --yes pandoc
       - name: Fetch examples repository
         working-directory: /tmp
         run:
           git clone https://github.com/IDAES/examples-pse.git
       # QUESTION: would it make sense to split this into separate steps
       # e.g. run notebooks, build
-      - name: Run and build example docs
+      - name: Run examples in test mode
         working-directory: /tmp/examples-pse
         run: |
-          python build.py -crd
+          python build.py -vv --test
