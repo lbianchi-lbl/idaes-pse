@@ -6,6 +6,8 @@ on:
       - Core
     branches:
       - main-test
+    types:
+      - requested
   pull_request:
     types:
     # it probably makes more sense to use the review requested feature on one of the bot accounts
