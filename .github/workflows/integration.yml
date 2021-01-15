@@ -5,7 +5,7 @@ on:
     workflows:
       - Core
     branches:
-      - main
+      - main-test
   pull_request:
     types:
     # it probably makes more sense to use the review requested feature on one of the bot accounts
