@@ -5,6 +5,7 @@ on:
     branches:
       # TODO this could also be run when pushing to main, but could end up clogging the CI when merging multiple PRs
       - rel_*
+      - main-test
   schedule:
     # run daily at 5:00 am UTC (12 am ET/9 pm PT)
     - cron: '0 5 * * *'
