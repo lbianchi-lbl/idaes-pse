@@ -1,0 +1,96 @@
+name: Integration
+
+on:
+  workflow_run:
+    workflows:
+      - Core
+    branches:
+      - main
+  pull_request:
+    types:
+    # it probably makes more sense to use the review requested feature on one of the bot accounts
+      # - labeled
+      - review_requested
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check-skip:
+    name: Check if integration tests should run
+    # NOTE: the name of the special label is hardcoded here
+    # it would be better to extract it to a more global location, e.g. the workflow-level env context,
+    # but the env context is not available in job-level if expressions (only step-level ones)
+    # if: (github.event.name != 'pull_request') || contains(github.event.label.name, 'approved')
+    if: (github.event.name != 'pull_request') || contains(github.event.users.*.login, 'idaes-debug')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify
+        run: echo "The integration tests will run"
+  pytest:
+    name: Tests (py${{ matrix.python-version }}/${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [check-skip]
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+          - '3.8'
+        os:
+          - ubuntu-18.04
+          - windows-latest
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(matrix) }}'
+          echo '${{ toJSON(github.event) }}'
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          install-target: '.'
+      - name: Run pytest (integration)
+        uses: ./.github/actions/pytest
+        with:
+          markexpr: integration
+  examples:
+    name: Run examples (py${{ matrix.python-version }}/${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.7'
+        os:
+          - ubuntu-18.04
+    steps:
+      - name: Display debug info
+        run: |
+          echo '${{ toJSON(matrix) }}'
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up idaes
+        uses: ./.github/actions/setup-idaes
+        with:
+          install-target: -r requirements-dev.txt
+      - name: Fetch examples repository
+        uses: actions/checkout@v2
+        with:
+          repository: IDAES/examples-pse
+      # QUESTION: would it make sense to split this into separate steps
+      # e.g. run notebooks, build
+      - name: Run and build example docs
+        shell: bash
+        run: |
+          cd examples-pse/docs
+          python build.py -crd
