@@ -84,6 +84,10 @@ jobs:
         uses: ./.github/actions/setup-idaes
         with:
           install-target: -r requirements-dev.txt
+      - name: Install other dependencies
+        run: |
+          sudo apt update
+          sudo apt install --yes pandoc
       - name: Fetch examples repository
         working-directory: /tmp
         run:
