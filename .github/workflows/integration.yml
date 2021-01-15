@@ -93,4 +93,4 @@ jobs:
       - name: Run examples in test mode
         working-directory: /tmp/examples-pse
         run: |
-          python build.py -vv --test
+          python build.py -vv --config ./build-ci.yml
