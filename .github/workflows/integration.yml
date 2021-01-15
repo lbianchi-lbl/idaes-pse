@@ -123,16 +123,10 @@ jobs:
               args: "-b html -T docs_test docs_test/_build/html"
               error_file: sphinx-errors.txt
           EOL
-          python build.py -vv --test --config ./adhoc.yml
+          python build.py -v --test --config ./adhoc.yml
       - name: Save run artifacts
+        if: failure()
         uses: actions/upload-artifact@v2
         with:
           path: /tmp/examples-pse/*-errors.txt
           if-no-files-found: warn
-      - name: Check that there were no errors
-        working-directory: /tmp/examples-pse
-        run: |
-          # -s returns true when the file exists and has a size > 0
-          # its negation works as an assertion of no nb errors because it will cause the step to succeed
-          # if the error file is missing or empty
-          ! [ -s ci-test-errors.txt ]
