@@ -91,6 +91,6 @@ jobs:
       # QUESTION: would it make sense to split this into separate steps
       # e.g. run notebooks, build
       - name: Run and build example docs
-        working-directory: /tmp/examples-pse/docs
+        working-directory: /tmp/examples-pse
         run: |
           python build.py -crd
