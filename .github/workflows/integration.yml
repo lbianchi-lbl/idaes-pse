@@ -63,6 +63,7 @@ jobs:
           markexpr: integration
   examples:
     name: Run examples (py${{ matrix.python-version }}/${{ matrix.os }})
+    needs: [check-skip]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
