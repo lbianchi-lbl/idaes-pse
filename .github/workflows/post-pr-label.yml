@@ -4,7 +4,7 @@ on:
 
 jobs:
   remove-util-label:
-    if: contains(github.event.label.name, 'CI:')
+    if: startsWith(github.event.label.name, 'CI')
     runs-on: ubuntu-latest
     steps:
       - name: Wait a bit
