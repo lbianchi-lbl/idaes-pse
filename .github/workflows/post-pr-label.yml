@@ -1,0 +1,21 @@
+on:
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  remove-util-label:
+    if: contains(github.event.label.name, 'CI:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove CI util label
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.IDAES_BUILD_TOKEN }}
+          script: |
+            github.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              label: context.payload.label.name
+            })
+        
