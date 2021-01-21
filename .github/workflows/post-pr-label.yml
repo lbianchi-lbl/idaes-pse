@@ -2,11 +2,11 @@ on:
   workflow_run:
     workflows:
       - Integration
-    types: [requested]
+    types: [completed]
 
 jobs:
   remove-util-label:
-    if: github.event.workflow_run.event == 'labeled'
+    if: github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Wait a bit
