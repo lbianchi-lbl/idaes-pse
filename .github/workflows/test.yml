@@ -17,4 +17,4 @@ jobs:
     steps:
       - name: Display debug info
         shell: bash
-        run: jq < "$GITHUB_EVENT_PATH"
+        run: jq . "$GITHUB_EVENT_PATH"
