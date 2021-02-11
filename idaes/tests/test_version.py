@@ -31,8 +31,10 @@ def test_ver_class():
     assert str(v) == '1.2.3'
     v = ver.Version(1, 2, 3, 'beta', 1)
     assert str(v) == '1.2.3.b1'
+    assert list(v) == [1, 2, 3, 'beta', 1]
     v = ver.Version(1, 2, 3, 'development')
     assert str(v) == '1.2.3.dev'
+    assert list(v) == [1, 2, 3, 'development']
     pytest.raises(ValueError, ver.Version, 1, 2, 3, 'howdy')
 
 
