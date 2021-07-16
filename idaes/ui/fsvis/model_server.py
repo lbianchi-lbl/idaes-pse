@@ -243,7 +243,7 @@ class FlowsheetServerHandler(http.server.SimpleHTTPRequestHandler):
             self._get_fs(id_)
         else:
             # Try to serve a file
-            self.directory = _static_dir  # keep here: overwritten if set earlier
+            self.directory = str(_static_dir)  # keep here: overwritten if set earlier
             super().do_GET()
 
     def _get_app(self, id_):
