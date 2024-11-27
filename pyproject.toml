@@ -1,0 +1,105 @@
+[build-system]
+requires = [
+    "setuptools >= 64",
+    "setuptools_scm >= 7",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idaes-pse" 
+readme = "README.md"
+license = {file = "LICENSE.md"}
+dynamic = ["version"]
+requires-python = ">=3.9,<3.13"
+keywords = [
+    "idaes-pse",
+    "process modeling",
+    "pyomo",
+    "energy systems",
+    "chemical engineering",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pyomo >=6.8.2",
+    "pint >=0.24.1",
+    "networkx",
+    "numpy >=1,<3",
+    "pandas !=2.1.0,<3",
+    "scipy",
+    "sympy",
+    "matplotlib",
+    "click >=8",
+]
+[project.optional-dependencies]
+ui = [
+    "idaes-ui @ git+https://github.com/IDAES/idaes-ui@main",
+]
+omlt = [
+    "omlt ==1.1",
+    "tensorflow",
+    "onnx",
+]
+grid = [
+    "gridx-prescient >=2.2.1"
+]
+coolprop = [
+    "coolprop",
+]
+testing = [
+    "pytest",
+    "addheader",
+    "pyyaml",
+]
+
+[project.scripts]
+"idaes" = "idaes.commands.base:command_base"
+
+[tool.setuptools.package-data]
+"idaes" = [
+    "*.template",
+    "*.json",
+    "*.yaml",
+    "*.svg",
+    "*.png",
+    "*.jpg",
+    "*.csv",
+    "*.ipynb",
+    "*.txt",
+    "*.js",
+    "*.css",
+    "*.html",
+    "*.json.gz",
+    "*.dat",
+    "*.h5",
+    "*.pb",  # for Keras Surrogate folder
+    "*.data-00000-of-00001",  # for Keras Surrogate folder
+    "*.index",  # for Keras Surrogate folder
+    "*.trc",
+    "*.nl",
+    "*.keras",  # idaes/core/surrogate/tests/data/keras_models
+    "*.onnx",
+]
+
+[tool.setuptools_scm]
+# https://setuptools-scm.readthedocs.io/en/v8.1.0/extending/
+version_scheme = "only-version"
+local_scheme = "node-and-date"
